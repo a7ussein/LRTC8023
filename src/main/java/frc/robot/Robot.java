@@ -163,7 +163,7 @@ private XboxController intakeController = new XboxController(1);
         }
         break;
       case kDriveForwardAndBalance:
-        if(distance < 10){
+        if(distance < 1){
           drive.tankDrive(0.6, 0.6);
         }else{
           drive.tankDrive(0, 0);
