@@ -1,5 +1,8 @@
 package frc.robot;
 
+import javax.swing.text.html.HTMLDocument.BlockElement;
+import javax.xml.validation.Validator;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
@@ -16,9 +19,7 @@ import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-
 public class Robot extends TimedRobot {
-
 
   // Auto Stuff:
   private static final String kDefaultAuto = "Nothing Auto";
@@ -27,8 +28,8 @@ public class Robot extends TimedRobot {
   private static final String kDepositAndDriveForward = "DepositCupeAndDriveForward";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  
- // Variable Declarations for kick the bot auto!
+
+  // Variable Declarations for kick the bot auto!
   double leftSlow = 0.24;
   double rightSlow = -0.24;
   double rotateSpeed = 0.35;
@@ -37,39 +38,38 @@ public class Robot extends TimedRobot {
   // Inputs
   private ADIS16470_IMU gyro = new ADIS16470_IMU();
 
- // Outputs
- private CANSparkMax leftFrontMotor = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
- private CANSparkMax leftBackMotor = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
- private CANSparkMax rightFrontMotor = new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless);
- private CANSparkMax rightBackMotor = new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless);
- 
- MotorControllerGroup leftControllerGroup = new MotorControllerGroup(leftFrontMotor, leftBackMotor);
- MotorControllerGroup rightControllerGroup = new MotorControllerGroup(rightFrontMotor, rightBackMotor);
+  // Outputs
+  private CANSparkMax leftFrontMotor = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
+  private CANSparkMax leftBackMotor = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
+  private CANSparkMax rightFrontMotor = new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless);
+  private CANSparkMax rightBackMotor = new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless);
 
- DifferentialDrive drive = new DifferentialDrive(leftControllerGroup, rightControllerGroup);
+  MotorControllerGroup leftControllerGroup = new MotorControllerGroup(leftFrontMotor, leftBackMotor);
+  MotorControllerGroup rightControllerGroup = new MotorControllerGroup(rightFrontMotor, rightBackMotor);
 
- 
- RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
- RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
- 
-// Intake Motors 
+  DifferentialDrive drive = new DifferentialDrive(leftControllerGroup, rightControllerGroup);
+
+  RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
+  RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
+
+  // Intake Motors
   private WPI_VictorSPX rollerMotor = new WPI_VictorSPX(5);
   private WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6);
 
- //Unit Conversion 
- private final double kDriveTick2Feet = 1.0/4096*6*Math.PI/12;
+  // Unit Conversion
+  private final double kDriveTick2Feet = 1.0 / 4096 * 6 * Math.PI / 12;
 
- public double getAverageEncoderDistance(){
-  return ((leftEncoder.getPosition() * kDriveTick2Feet) + (rightEncoder.getPosition() * kDriveTick2Feet))/2;
- }
+  public double getAverageEncoderDistance() {
+    return ((leftEncoder.getPosition()) + (rightEncoder.getPosition()) / 2) * kDriveTick2Feet;
+  }
 
-   // Controllers
-private XboxController driveController = new XboxController(0);
-private XboxController intakeController = new XboxController(1);
+  // Controllers
+  private XboxController driveController = new XboxController(0);
+  private XboxController intakeController = new XboxController(1);
 
   @Override
   public void robotInit() {
-    //Auto stuff:
+    // Auto stuff:
     m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
     m_chooser.addOption("TryToKickTheRbot", kDriveForward10Seconds);
     m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance);
@@ -77,28 +77,29 @@ private XboxController intakeController = new XboxController(1);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     rightFrontMotor.restoreFactoryDefaults();
-    rightBackMotor.restoreFactoryDefaults(); 
+    rightBackMotor.restoreFactoryDefaults();
     leftFrontMotor.restoreFactoryDefaults();
     leftBackMotor.restoreFactoryDefaults();
 
+    // Invertation Settings
     rightControllerGroup.setInverted(true);
     leftControllerGroup.setInverted(false);
 
     leftEncoder.setPosition(0);
     rightEncoder.setPosition(0);
 
-
-    gyro.reset();
     gyro.calibrate();
+    gyro.reset();
   }
 
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("Left encoder value in feets", leftEncoder.getPosition() * kDriveTick2Feet);
-    SmartDashboard.putNumber("Right encoder value in meters", rightEncoder.getPosition() * kDriveTick2Feet);
+    SmartDashboard.putNumber("Left encoder value", leftEncoder.getPosition() );
+    SmartDashboard.putNumber("Right encoder value", rightEncoder.getPosition());
     SmartDashboard.putNumber("left Encoder Velocity", leftEncoder.getVelocity());
     SmartDashboard.putNumber("right Encoder velocity", rightEncoder.getVelocity());
     SmartDashboard.putNumber("Average Encoder Distance", getAverageEncoderDistance());
+    SmartDashboard.putNumber("YComplementaryAngle", gyro.getYComplementaryAngle() * -1);
     SmartDashboard.putNumber("YAW angle", gyro.getAngle());
     SmartDashboard.putNumber("Imu Turn Rate", gyro.getRate());
   }
@@ -110,52 +111,70 @@ private XboxController intakeController = new XboxController(1);
     System.out.println("Auto selected: " + m_autoSelected);
 
     gyro.reset();
-    gyro.calibrate();
+
+    m_starting = true;
+    m_onRamp = false;
+    m_descending = false;
+    m_onFlat = false;
+    m_ascending = false;
+    m_exitingRamp = false;
+    m_startBalancing = false;
+    m_balancing = false;
   }
+
+  private Boolean m_starting;
+  private Boolean m_onRamp;
+  private Boolean m_descending;
+  private Boolean m_onFlat;
+  private Boolean m_ascending;
+  private Boolean m_exitingRamp;
+  private Boolean m_startBalancing;
+  private Boolean m_balancing;
+  private Double m_position;
 
   @Override
   public void autonomousPeriodic() {
-    double leftPosition = leftEncoder.getPosition() * kDriveTick2Feet;
-    double rightPosition = rightEncoder.getPosition() * kDriveTick2Feet;
-    double distance = (leftPosition + rightPosition) /2;
+    double leftPosition = leftEncoder.getPosition();
+    double rightPosition = rightEncoder.getPosition();
+    double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
 
     switch (m_autoSelected) {
       case kDriveForward10Seconds:
         if (Math.abs(gyro.getAngle()) <= 3) {
-          leftControllerGroup.set(leftSlow - (gyro.getAngle()/ 15));
-          rightControllerGroup.set(rightSlow - (gyro.getAngle()/15));;
-        }else if(Math.abs(gyro.getAngle()) < 10){
-          if(gyro.getAngle() > 0){
+          leftControllerGroup.set(leftSlow - (gyro.getAngle() / 15));
+          rightControllerGroup.set(rightSlow - (gyro.getAngle() / 15));
+        } else if (Math.abs(gyro.getAngle()) < 10) {
+          if (gyro.getAngle() > 0) {
             leftControllerGroup.set(leftSlow);
-            rightControllerGroup.set(1.1*rightSlow);
-          }else if(gyro.getAngle()<0){
-            leftControllerGroup.set(1.1*leftSlow);
+            rightControllerGroup.set(1.1 * rightSlow);
+          } else if (gyro.getAngle() < 0) {
+            leftControllerGroup.set(1.1 * leftSlow);
             rightControllerGroup.set(rightSlow);
           }
-        }else{
-          if(gyro.getAngle() > 0){
-            while(gyro.getAngle() > 10 && isAutonomous()){
+        } else {
+          if (gyro.getAngle() > 0) {
+            while (gyro.getAngle() > 10 && isAutonomous()) {
               leftControllerGroup.set(-rotateSpeed);
               rightControllerGroup.set(-rotateSpeed);
             }
-            while(gyro.getAngle() > 0 && isAutonomous()){
+            while (gyro.getAngle() > 0 && isAutonomous()) {
               leftControllerGroup.set(-rotateSpeedSlow);
               rightControllerGroup.set(-rotateSpeedSlow);
             }
-            while(gyro.getAngle() < 0 && isAutonomous()){
+            while (gyro.getAngle() < 0 && isAutonomous()) {
               leftControllerGroup.set(rotateSpeedSlow);
               rightControllerGroup.set(rotateSpeedSlow);
             }
-          }else{
-            while(gyro.getAngle() < -10 && isAutonomous()){
+          } else {
+            while (gyro.getAngle() < -10 && isAutonomous()) {
               leftControllerGroup.set(rotateSpeed);
               rightControllerGroup.set(rotateSpeed);
             }
-            while(gyro.getAngle() < 0 && isAutonomous()){
+            while (gyro.getAngle() < 0 && isAutonomous()) {
               leftControllerGroup.set(rotateSpeedSlow);
               rightControllerGroup.set(rotateSpeedSlow);
             }
-            while(gyro.getAngle() > 0 && isAutonomous()){
+            while (gyro.getAngle() > 0 && isAutonomous()) {
               leftControllerGroup.set(-rotateSpeed);
               rightControllerGroup.set(-rotateSpeed);
             }
@@ -163,30 +182,83 @@ private XboxController intakeController = new XboxController(1);
         }
         break;
       case kDriveForwardAndBalance:
-        if(distance < 1){
-          drive.tankDrive(0.6, 0.6);
-        }else{
-          drive.tankDrive(0, 0);
+        double  vAngle = gyro.getYComplementaryAngle(); // vAngle stands for vertical angle
+
+        // rio is mounted backward
+        vAngle = vAngle * -1;
+
+        if (m_starting && vAngle > 5) {
+          m_onRamp = true;
+          m_ascending = true;
+          m_starting = false;
         }
-        //AUTO TO BALANCE ON CHARGING STATION:
-        double vAngle = gyro.getYComplementaryAngle();  // vAngle stands for vertical angle
-        if(Math.abs(vAngle) > 2){
-          drive.tankDrive(-0.5, -0.5);
+
+        if (m_ascending && vAngle < 0) {
+          m_ascending = false;
+          m_onFlat = true;
         }
-        if(Math.abs(vAngle) < -2){
-          drive.tankDrive(0.5, 0.5);
+
+        if (m_onFlat && Math.abs(vAngle) > 5) {
+          m_onFlat = false;
+          m_descending = true;
+        }
+
+        if (m_descending && Math.abs(vAngle) < 2) {
+          m_descending = false;
+          m_onRamp = false;
+          m_exitingRamp = true;
+          m_position = Math.abs(leftPosition);
+        }
+
+        if (m_starting || m_ascending) {
+          drive.tankDrive(0.55, 0.55);
+        }
+
+        if (m_onFlat || m_descending) {
+          drive.tankDrive(0.2, 0.2);
+        }
+
+        if (m_exitingRamp){
+          if (Math.abs(leftPosition) < m_position + 4){
+            drive.tankDrive(0.3, 0.3);
+          }
+          else {
+            m_exitingRamp = false;
+            m_startBalancing = true;
+            //leftEncoder.setPosition(0);
+            m_position = leftPosition - 20;
+          }
+        }
+      
+        if (m_startBalancing) {
+          if (leftPosition > m_position) {
+          //if (Math.abs(vAngle) > 10) {
+            drive.tankDrive(-0.55, -0.55);
+          } else {
+            m_startBalancing = false;
+            m_balancing = true;
+          }
+        }
+
+        if (m_balancing) {
+          if (vAngle > 2) {
+            drive.tankDrive(0.3, 0.3);
+          }
+          if (vAngle < -2) {
+            drive.tankDrive(-0.3, -0.3);
+          }
         }
         break;
       case kDepositAndDriveForward:
         rollerMotor.set(0.5);
-        if(gyro.getAngle() < 1){
+        if (gyro.getAngle() < 1) {
           drive.tankDrive(-0.6, 0.6);
-        }else{
+        } else {
           drive.tankDrive(0, 0);
         }
-        if(distance < 10){
+        if (getAverageEncoderDistance() < 10) {
           drive.tankDrive(0.6, 0.6);
-        }else{
+        } else {
           drive.tankDrive(0, 0);
         }
         break;
@@ -201,30 +273,34 @@ private XboxController intakeController = new XboxController(1);
   public void teleopInit() {
     enableDrivingMotors(true);
     enableIntakeMotors(true);
+
+    leftEncoder.setPosition(0);
+    rightEncoder.setPosition(0);
   }
 
   @Override
   public void teleopPeriodic() {
-    System.out.println(Math.round(gyro.getAngle()));
- // drive controll
-    double rightSpeed = -driveController.getRawAxis(1);  // for this axis: up is negative, down is positive
-    double leftSpeed = -driveController.getRawAxis(5); 
-    drive.tankDrive(rightSpeed *0.5, leftSpeed *0.5); //slowed speed down to 50%
+    // System.out.println(Math.round(gyro.getAngle()));
+    // drive controll
+    double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
+    double turn = -driveController.getRawAxis(4);
+    drive.arcadeDrive(Speed * 0.75, turn *0.5); // slowed speed down to 50%
 
     // intake Raising Controll
     double raisingPower = intakeController.getRawAxis(1);
-    // deadBand 
-    if(Math.abs(raisingPower) < 0.05){
+    // deadBand
+    if (Math.abs(raisingPower) < 0.05) {
       raisingPower = 0;
     }
     raisingMotor.set(raisingPower * 0.5);
 
     // intake Rollers control
     double rollersPower = 0;
-    // press A if you want to pick up an object, and press Y if you want to shoot the object
-    if(intakeController.getAButton() == true){
+    // press A if you want to pick up an object, and press Y if you want to shoot
+    // the object
+    if (intakeController.getAButton() == true) {
       rollersPower = 1;
-    }else if(intakeController.getYButton() == true){
+    } else if (intakeController.getYButton() == true) {
       rollersPower = -1;
     }
 
@@ -233,48 +309,53 @@ private XboxController intakeController = new XboxController(1);
 
   @Override
   public void disabledInit() {
-    enableDrivingMotors(false);
-    enableIntakeMotors(false);
+    enableDrivingMotors(true);
+    enableIntakeMotors(true);
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+  }
 
-
-  private void enableDrivingMotors(boolean on){
+  private void enableDrivingMotors(boolean on) {
     IdleMode dMotormode;
-    if(on){
+    if (on) {
       dMotormode = IdleMode.kBrake;
-    }else{
+    } else {
       dMotormode = IdleMode.kCoast;
     }
     leftFrontMotor.setIdleMode(dMotormode);
-    leftBackMotor.setIdleMode(dMotormode); 
+    leftBackMotor.setIdleMode(dMotormode);
     rightFrontMotor.setIdleMode(dMotormode);
-    rightBackMotor.setIdleMode(dMotormode); 
+    rightBackMotor.setIdleMode(dMotormode);
   }
-  private void enableIntakeMotors(boolean on){
+
+  private void enableIntakeMotors(boolean on) {
     NeutralMode iMotorMode;
-    if(on){
+    if (on) {
       iMotorMode = NeutralMode.Brake;
-    }else{
+    } else {
       iMotorMode = NeutralMode.Coast;
     }
 
     raisingMotor.setNeutralMode(iMotorMode);
     rollerMotor.setNeutralMode(iMotorMode);
   }
-  //--------------------------
+  // --------------------------
 
   @Override
-  public void testInit() {}
+  public void testInit() {
+  }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+  }
 
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+  }
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+  }
 }
