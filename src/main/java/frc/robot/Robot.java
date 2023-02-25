@@ -22,13 +22,13 @@ public class Robot extends TimedRobot {
 
   // Auto Stuff:
   private static final String kDefaultAuto = "Nothing Auto";
-  private static final String kDriveForward10Seconds = "Drive Forward for 10 seconds";
+  private static final String kDriveForward10Seconds = "Try Kick The Robot";
   private static final String kDriveForwardAndBalance = "Drive Forward and balance";
   private static final String kDepositAndDriveForward = "DepositCupeAndDriveForward";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
- // Variable Declarations
+ // Variable Declarations for kick the bot auto!
   double leftSlow = 0.24;
   double rightSlow = -0.24;
   double rotateSpeed = 0.35;
@@ -71,7 +71,7 @@ private XboxController intakeController = new XboxController(1);
   public void robotInit() {
     //Auto stuff:
     m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
-    m_chooser.addOption("DriveForward for 10 seconds", kDriveForward10Seconds);
+    m_chooser.addOption("TryToKickTheRbot", kDriveForward10Seconds);
     m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance);
     m_chooser.addOption("DepositAndDriveForward", kDepositAndDriveForward);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -209,7 +209,7 @@ private XboxController intakeController = new XboxController(1);
  // drive controll
     double rightSpeed = -driveController.getRawAxis(1);  // for this axis: up is negative, down is positive
     double leftSpeed = -driveController.getRawAxis(5); 
-    drive.tankDrive(rightSpeed *0.5, leftSpeed *0.5); //slow speed (power) down to 80% and turning speed (turn) to 30% for better controllability
+    drive.tankDrive(rightSpeed *0.5, leftSpeed *0.5); //slowed speed down to 50%
 
     // intake Raising Controll
     double raisingPower = intakeController.getRawAxis(1);
@@ -217,7 +217,8 @@ private XboxController intakeController = new XboxController(1);
     if(Math.abs(raisingPower) < 0.05){
       raisingPower = 0;
     }
-    raisingMotor.set(raisingPower* 0.5);
+    raisingMotor.set(raisingPower * 0.5);
+
     // intake Rollers control
     double rollersPower = 0;
     // press A if you want to pick up an object, and press Y if you want to shoot the object
