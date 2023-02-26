@@ -1,7 +1,5 @@
 package frc.robot;
 
-import javax.swing.text.html.HTMLDocument.BlockElement;
-import javax.xml.validation.Validator;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -23,7 +21,6 @@ public class Robot extends TimedRobot {
 
   // Auto Stuff:
   private static final String kDefaultAuto = "Nothing Auto";
-  private static final String kDriveForward10Seconds = "Try Kick The Robot";
   private static final String kDriveForwardAndBalance = "Drive Forward and balance";
   private static final String kDepositAndDriveForward = "DepositCupeAndDriveForward";
   private String m_autoSelected;
@@ -71,7 +68,6 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Auto stuff:
     m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
-    m_chooser.addOption("TryToKickTheRbot", kDriveForward10Seconds);
     m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance);
     m_chooser.addOption("DepositAndDriveForward", kDepositAndDriveForward);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -94,6 +90,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    double leftPosition = leftEncoder.getPosition();
+    SmartDashboard.putNumber("Left Position", leftPosition);
     SmartDashboard.putNumber("Left encoder value", leftEncoder.getPosition() );
     SmartDashboard.putNumber("Right encoder value", rightEncoder.getPosition());
     SmartDashboard.putNumber("left Encoder Velocity", leftEncoder.getVelocity());
@@ -109,7 +107,7 @@ public class Robot extends TimedRobot {
     // Auto Stuff:
     m_autoSelected = m_chooser.getSelected();
     System.out.println("Auto selected: " + m_autoSelected);
-
+    leftEncoder.setPosition(0);
     gyro.reset();
 
     m_starting = true;
@@ -139,48 +137,6 @@ public class Robot extends TimedRobot {
     double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
 
     switch (m_autoSelected) {
-      case kDriveForward10Seconds:
-        if (Math.abs(gyro.getAngle()) <= 3) {
-          leftControllerGroup.set(leftSlow - (gyro.getAngle() / 15));
-          rightControllerGroup.set(rightSlow - (gyro.getAngle() / 15));
-        } else if (Math.abs(gyro.getAngle()) < 10) {
-          if (gyro.getAngle() > 0) {
-            leftControllerGroup.set(leftSlow);
-            rightControllerGroup.set(1.1 * rightSlow);
-          } else if (gyro.getAngle() < 0) {
-            leftControllerGroup.set(1.1 * leftSlow);
-            rightControllerGroup.set(rightSlow);
-          }
-        } else {
-          if (gyro.getAngle() > 0) {
-            while (gyro.getAngle() > 10 && isAutonomous()) {
-              leftControllerGroup.set(-rotateSpeed);
-              rightControllerGroup.set(-rotateSpeed);
-            }
-            while (gyro.getAngle() > 0 && isAutonomous()) {
-              leftControllerGroup.set(-rotateSpeedSlow);
-              rightControllerGroup.set(-rotateSpeedSlow);
-            }
-            while (gyro.getAngle() < 0 && isAutonomous()) {
-              leftControllerGroup.set(rotateSpeedSlow);
-              rightControllerGroup.set(rotateSpeedSlow);
-            }
-          } else {
-            while (gyro.getAngle() < -10 && isAutonomous()) {
-              leftControllerGroup.set(rotateSpeed);
-              rightControllerGroup.set(rotateSpeed);
-            }
-            while (gyro.getAngle() < 0 && isAutonomous()) {
-              leftControllerGroup.set(rotateSpeedSlow);
-              rightControllerGroup.set(rotateSpeedSlow);
-            }
-            while (gyro.getAngle() > 0 && isAutonomous()) {
-              leftControllerGroup.set(-rotateSpeed);
-              rightControllerGroup.set(-rotateSpeed);
-            }
-          }
-        }
-        break;
       case kDriveForwardAndBalance:
         double  vAngle = gyro.getYComplementaryAngle(); // vAngle stands for vertical angle
 
@@ -250,14 +206,9 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-        rollerMotor.set(0.5);
-        if (gyro.getAngle() < 1) {
-          drive.tankDrive(-0.6, 0.6);
-        } else {
-          drive.tankDrive(0, 0);
-        }
-        if (getAverageEncoderDistance() < 10) {
-          drive.tankDrive(0.6, 0.6);
+        // rollerMotor.set(-0.5);
+        if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
+          drive.tankDrive(-0.3, -0.3);
         } else {
           drive.tankDrive(0, 0);
         }
@@ -284,7 +235,7 @@ public class Robot extends TimedRobot {
     // drive controll
     double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4);
-    drive.arcadeDrive(Speed * 0.75, turn *0.5); // slowed speed down to 50%
+    drive.arcadeDrive(Speed * 0.9 , turn *0.5); // slowed speed down to 50%
 
     // intake Raising Controll
     double raisingPower = intakeController.getRawAxis(1);
@@ -298,9 +249,9 @@ public class Robot extends TimedRobot {
     double rollersPower = 0;
     // press A if you want to pick up an object, and press Y if you want to shoot
     // the object
-    if (intakeController.getAButton() == true) {
+    if (intakeController.getYButton() == true) {
       rollersPower = 1;
-    } else if (intakeController.getYButton() == true) {
+    } else if (intakeController.getBButton() == true) {
       rollersPower = -1;
     }
 
