@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DigitalInput;
 
 public class Robot extends TimedRobot {
 
@@ -42,6 +43,9 @@ public class Robot extends TimedRobot {
 
   RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
   RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
+
+  DigitalInput frontLimitSensor = new DigitalInput(8);
+  DigitalInput backLimitSensor = new DigitalInput(9);
 
   // Intake Motors
   private WPI_VictorSPX rollerMotor = new WPI_VictorSPX(5);
@@ -243,7 +247,22 @@ public class Robot extends TimedRobot {
     if (Math.abs(raisingPower) < 0.05) {
       raisingPower = 0;
     }
-    raisingMotor.set(raisingPower * 0.5);
+
+    // going forward
+    if (raisingPower < 0 && !frontLimitSensor.get()) {
+      raisingPower = 0;
+    }
+
+    // going backward
+    if (raisingPower > 0 && !backLimitSensor.get()) {
+      raisingPower = 0;
+    }
+
+    raisingMotor.set(raisingPower * 0.3);
+    // if ((raisingPower < 0 && frontLimitSensor.get()) || (raisingPower > 0 && backLimitSensor.get())) {
+    // }else{
+    //   raisingMotor.set(0);
+    // }
 
     // intake Rollers control
     double rollersPower = 0;
