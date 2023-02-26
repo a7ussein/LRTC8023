@@ -25,13 +25,7 @@ public class Robot extends TimedRobot {
   private static final String kDepositAndDriveForward = "DepositCupeAndDriveForward";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-
-  // Variable Declarations for kick the bot auto!
-  double leftSlow = 0.24;
-  double rightSlow = -0.24;
-  double rotateSpeed = 0.35;
-  double rotateSpeedSlow = 0.25;
-
+  
   // Inputs
   private ADIS16470_IMU gyro = new ADIS16470_IMU();
 
@@ -54,10 +48,11 @@ public class Robot extends TimedRobot {
   private WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6);
 
   // Unit Conversion
-  private final double kDriveTick2Feet = 1.0 / 4096 * 6 * Math.PI / 12;
+  // private final double kDriveTick2Feet = 1.0 / 4096 * 6 * Math.PI / 12;
 
+  // This should now disblay the number of wheel rotations.
   public double getAverageEncoderDistance() {
-    return ((leftEncoder.getPosition()) + (rightEncoder.getPosition()) / 2) * kDriveTick2Feet;
+    return ((Math.abs(leftEncoder.getPosition()) + (rightEncoder.getPosition()) / 2)/8.46);
   }
 
   // Controllers
@@ -96,7 +91,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Right encoder value", rightEncoder.getPosition());
     SmartDashboard.putNumber("left Encoder Velocity", leftEncoder.getVelocity());
     SmartDashboard.putNumber("right Encoder velocity", rightEncoder.getVelocity());
-    SmartDashboard.putNumber("Average Encoder Distance", getAverageEncoderDistance());
+    SmartDashboard.putNumber("Average Encoder Distance in wheel rotations", getAverageEncoderDistance());
     SmartDashboard.putNumber("YComplementaryAngle", gyro.getYComplementaryAngle() * -1);
     SmartDashboard.putNumber("YAW angle", gyro.getAngle());
     SmartDashboard.putNumber("Imu Turn Rate", gyro.getRate());
@@ -110,6 +105,7 @@ public class Robot extends TimedRobot {
     leftEncoder.setPosition(0);
     gyro.reset();
 
+    // Balancing auto booleans inits -- Don't play around with them
     m_starting = true;
     m_onRamp = false;
     m_descending = false;
@@ -119,7 +115,8 @@ public class Robot extends TimedRobot {
     m_startBalancing = false;
     m_balancing = false;
   }
-
+  
+  // Balancing auto Booleans:
   private Boolean m_starting;
   private Boolean m_onRamp;
   private Boolean m_descending;
@@ -132,13 +129,15 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
+    // Don't play with these values cuz they are gonna affect the balancing auto
     double leftPosition = leftEncoder.getPosition();
     double rightPosition = rightEncoder.getPosition();
     double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
 
     switch (m_autoSelected) {
+      // Don't play around with the Balancing auto cuz it is good as it is
       case kDriveForwardAndBalance:
-        double  vAngle = gyro.getYComplementaryAngle(); // vAngle stands for vertical angle
+        double  vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
 
         // rio is mounted backward
         vAngle = vAngle * -1;
@@ -213,9 +212,8 @@ public class Robot extends TimedRobot {
           drive.tankDrive(0, 0);
         }
         break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
+        case kDefaultAuto:
+        default:
         break;
     }
   }
@@ -232,12 +230,12 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     // System.out.println(Math.round(gyro.getAngle()));
-    // drive controll
+    // drive controls
     double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4);
-    drive.arcadeDrive(Speed * 0.9 , turn *0.5); // slowed speed down to 50%
+    drive.arcadeDrive(Speed * 0.9 , turn *0.5); // slowed speed down to 90% and slowed turning to 50 so we have better control
 
-    // intake Raising Controll
+    // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
     // deadBand
     if (Math.abs(raisingPower) < 0.05) {
@@ -247,7 +245,7 @@ public class Robot extends TimedRobot {
 
     // intake Rollers control
     double rollersPower = 0;
-    // press A if you want to pick up an object, and press Y if you want to shoot
+    // press Y if you want to pick up an object, and press A if you want to shoot
     // the object
     if (intakeController.getYButton() == true) {
       rollersPower = 1;
