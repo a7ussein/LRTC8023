@@ -205,10 +205,12 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-        // rollerMotor.set(-0.5);
+        rollerMotor.set(-0.5); // shoot the cube out then drive backward for 8.5 wheel rotations
         if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
+          rollerMotor.set(0);
           drive.tankDrive(-0.3, -0.3);
         } else {
+          rollerMotor.set(0);
           drive.tankDrive(0, 0);
         }
         break;
