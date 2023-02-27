@@ -23,8 +23,8 @@ public class Robot extends TimedRobot {
   // Auto Stuff:
   private static final String kDefaultAuto = "Nothing Auto";
   private static final String kDriveForwardAndBalance = "Drive Forward and balance";
-  private static final String kDepositAndDriveForward = "DepositCupeAndDriveForward";
-  private static final String kTestAuto = "Test";
+  private static final String kDepositAndDriveForward = "Deposit Cupe And Drive Forward";
+  private static final String kDepositAndBalance = "Deposit Cube and Balance";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
@@ -70,7 +70,7 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
     m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance);
     m_chooser.addOption("DepositAndDriveForward", kDepositAndDriveForward);
-    m_chooser.addOption("Test", kTestAuto);
+    m_chooser.addOption("DepositCubeAndBalance", kDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     rightFrontMotor.restoreFactoryDefaults();
@@ -140,12 +140,14 @@ public class Robot extends TimedRobot {
     double leftPosition = leftEncoder.getPosition();
     double rightPosition = rightEncoder.getPosition();
     double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
+    double vAngleTest = gyro.getYComplementaryAngle(); // vAngleTes is for YComplementartAngle and I use it for autos that I am testing, I know I could just use vAngle that is in the kDriveForwardAndBalance but I just don't want to miss around with it. 
+
 
     switch (m_autoSelected) {
       // Don't play around with the Balancing auto cuz it is good as it is
       case kDriveForwardAndBalance:
         enableIntakeMotors(true);
-        double  vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
+       double vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
 
         // rio is mounted backward
         vAngle = vAngle * -1;
@@ -213,18 +215,91 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-        rollerMotor.set(1); // shoot the cube out then drive backward for 8.5 wheel rotations
+      rollerMotor.set(1); // shoot the cube out then drive backward for 8.5 wheel rotations
         if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
+          rollerMotor.set(0);
           drive.tankDrive(-0.3, -0.3);
         } else {
           rollerMotor.set(0);
           drive.tankDrive(0, 0);
         }
         break;
-        case kTestAuto:
-          enableIntakeMotors(true);
-          enableDrivingMotors(true);
-          break;
+        case kDepositAndBalance:
+        /*
+         * This auto is going to:
+         * 1. eject the cube which takes about 2 seconds,
+         * 2. balance which takes about 10 seconds 
+         */
+        rollerMotor.set(1); // eject the cube
+
+        // BALANCE 
+        // rio is mounted backward
+        vAngleTest = vAngleTest * -1;
+
+      if (m_starting && vAngleTest > 5) {
+        m_onRamp = true;
+        m_ascending = true;
+        m_starting = false;
+      }
+
+      if (m_ascending && vAngleTest < 0) {
+        rollerMotor.set(0); // sets the speed at zero
+        enableIntakeMotors(true); // enables break mode on both arm motor and rollers motor
+        m_ascending = false;
+        m_onFlat = true;
+      }
+
+      if (m_onFlat && Math.abs(vAngleTest) > 5) {
+        m_onFlat = false;
+        m_descending = true;
+      }
+
+      if (m_descending && Math.abs(vAngleTest) < 2) {
+        m_descending = false;
+        m_onRamp = false;
+        m_exitingRamp = true;
+        m_position = Math.abs(leftPosition);
+      }
+
+      if (m_starting || m_ascending) {
+        drive.tankDrive(0.55, 0.55);
+      }
+
+      if (m_onFlat || m_descending) {
+        drive.tankDrive(0.2, 0.2);
+      }
+
+      if (m_exitingRamp){
+        if (Math.abs(leftPosition) < m_position + 4){
+          drive.tankDrive(0.3, 0.3);
+        }
+        else {
+          m_exitingRamp = false;
+          m_startBalancing = true;
+          //leftEncoder.setPosition(0);
+          m_position = leftPosition - 20;
+        }
+      }
+    
+      if (m_startBalancing) {
+        if (leftPosition > m_position) {
+        //if (Math.abs(vAngle) > 10) {
+          drive.tankDrive(-0.55, -0.55);
+        } else {
+          m_startBalancing = false;
+          m_balancing = true;
+        }
+      }
+
+      if (m_balancing) {
+        if (vAngleTest > 2) {
+          drive.tankDrive(0.3, 0.3);
+        }
+        if (vAngleTest < -2) {
+          drive.tankDrive(-0.3, -0.3);
+        }
+      }
+        break;
         case kDefaultAuto:
         default:
         break;
