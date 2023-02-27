@@ -24,6 +24,7 @@ public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Nothing Auto";
   private static final String kDriveForwardAndBalance = "Drive Forward and balance";
   private static final String kDepositAndDriveForward = "DepositCupeAndDriveForward";
+  private static final String kTestAuto = "Test";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
@@ -69,6 +70,7 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
     m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance);
     m_chooser.addOption("DepositAndDriveForward", kDepositAndDriveForward);
+    m_chooser.addOption("Test", kTestAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     rightFrontMotor.restoreFactoryDefaults();
@@ -106,6 +108,7 @@ public class Robot extends TimedRobot {
     // Auto Stuff:
     m_autoSelected = m_chooser.getSelected();
     System.out.println("Auto selected: " + m_autoSelected);
+
     leftEncoder.setPosition(0);
     gyro.reset();
 
@@ -141,6 +144,7 @@ public class Robot extends TimedRobot {
     switch (m_autoSelected) {
       // Don't play around with the Balancing auto cuz it is good as it is
       case kDriveForwardAndBalance:
+        enableIntakeMotors(true);
         double  vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
 
         // rio is mounted backward
@@ -209,15 +213,18 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-        rollerMotor.set(-0.5); // shoot the cube out then drive backward for 8.5 wheel rotations
+        rollerMotor.set(1); // shoot the cube out then drive backward for 8.5 wheel rotations
         if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
-          rollerMotor.set(0);
           drive.tankDrive(-0.3, -0.3);
         } else {
           rollerMotor.set(0);
           drive.tankDrive(0, 0);
         }
         break;
+        case kTestAuto:
+          enableIntakeMotors(true);
+          enableDrivingMotors(true);
+          break;
         case kDefaultAuto:
         default:
         break;
@@ -243,7 +250,7 @@ public class Robot extends TimedRobot {
 
     // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
-    // deadBand
+    // deadBand -- just cuz, why not?
     if (Math.abs(raisingPower) < 0.05) {
       raisingPower = 0;
     }
@@ -258,11 +265,11 @@ public class Robot extends TimedRobot {
       raisingPower = 0;
     }
 
-    raisingMotor.set(raisingPower * 0.3);
-    // if ((raisingPower < 0 && frontLimitSensor.get()) || (raisingPower > 0 && backLimitSensor.get())) {
-    // }else{
-    //   raisingMotor.set(0);
-    // }
+    raisingMotor.set(raisingPower * 0.6);
+    if ((raisingPower < 0 && frontLimitSensor.get()) || (raisingPower > 0 && backLimitSensor.get())) {
+    }else{
+      raisingMotor.set(0);
+    }
 
     // intake Rollers control
     double rollersPower = 0;
@@ -270,10 +277,10 @@ public class Robot extends TimedRobot {
     // the object
     if (intakeController.getYButton() == true) {
       rollersPower = 1;
-    } else if (intakeController.getBButton() == true) {
-      rollersPower = -1;
+    } else if (intakeController.getAButton() == true) {
+      rollersPower = -0.7;
     }
-
+    // rollersPower = intakeController.getRawAxis(4);
     rollerMotor.set(ControlMode.PercentOutput, rollersPower);
   }
 
