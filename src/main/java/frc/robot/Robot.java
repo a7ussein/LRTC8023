@@ -224,7 +224,7 @@ public class Robot extends TimedRobot {
           drive.tankDrive(0, 0);
         }
         break;
-        case kDepositAndBalance:
+      case kDepositAndBalance:
         /*
          * This auto is going to:
          * 1. eject the cube which takes about 2 seconds,
