@@ -215,16 +215,15 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-      rollerMotor.set(1); // shoot the cube out then drive backward for 8.5 wheel rotations
+      rollerMotor.set(1); // shoot the cube out then drive forward for 8.5 wheel rotations
         if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
           rollerMotor.set(0);
-          drive.tankDrive(-0.3, -0.3);
+          drive.tankDrive(0.3, 0.3);
         } else {
-          rollerMotor.set(0);
           drive.tankDrive(0, 0);
         }
         break;
-      case kDepositAndBalance:
+        case kDepositAndBalance:
         /*
          * This auto is going to:
          * 1. eject the cube which takes about 2 seconds,
@@ -237,14 +236,14 @@ public class Robot extends TimedRobot {
         vAngleTest = vAngleTest * -1;
 
       if (m_starting && vAngleTest > 5) {
+        rollerMotor.set(0); // eject the cube
         m_onRamp = true;
         m_ascending = true;
         m_starting = false;
       }
 
       if (m_ascending && vAngleTest < 0) {
-        rollerMotor.set(0); // sets the speed at zero
-        enableIntakeMotors(true); // enables break mode on both arm motor and rollers motor
+        // rollerMotor.set(0); // sets the speed at zero
         m_ascending = false;
         m_onFlat = true;
       }
@@ -270,7 +269,7 @@ public class Robot extends TimedRobot {
       }
 
       if (m_exitingRamp){
-        if (Math.abs(leftPosition) < m_position + 4){
+        if (Math.abs(leftPosition) < m_position + 3){
           drive.tankDrive(0.3, 0.3);
         }
         else {
@@ -284,7 +283,7 @@ public class Robot extends TimedRobot {
       if (m_startBalancing) {
         if (leftPosition > m_position) {
         //if (Math.abs(vAngle) > 10) {
-          drive.tankDrive(-0.55, -0.55);
+          drive.tankDrive(-0.6, -0.6);
         } else {
           m_startBalancing = false;
           m_balancing = true;
@@ -293,10 +292,10 @@ public class Robot extends TimedRobot {
 
       if (m_balancing) {
         if (vAngleTest > 2) {
-          drive.tankDrive(0.3, 0.3);
+          drive.tankDrive(0.287, 0.287);
         }
         if (vAngleTest < -2) {
-          drive.tankDrive(-0.3, -0.3);
+          drive.tankDrive(-0.287, -0.287);
         }
       }
         break;
@@ -321,7 +320,7 @@ public class Robot extends TimedRobot {
     // drive controls
     double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4);
-    drive.arcadeDrive(Speed * 0.9 , turn *0.5); // slowed speed down to 90% and slowed turning to 50 so we have better control
+    drive.arcadeDrive(Speed * 0.9 , turn *0.3); // slowed speed down to 90% and slowed turning to 50 so we have better control
 
     // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
