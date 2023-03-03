@@ -236,14 +236,13 @@ public class Robot extends TimedRobot {
         vAngleTest = vAngleTest * -1;
 
       if (m_starting && vAngleTest > 5) {
-        rollerMotor.set(0); // eject the cube
+        // rollerMotor.set(0);
         m_onRamp = true;
         m_ascending = true;
         m_starting = false;
       }
 
       if (m_ascending && vAngleTest < 0) {
-        // rollerMotor.set(0); // sets the speed at zero
         m_ascending = false;
         m_onFlat = true;
       }
