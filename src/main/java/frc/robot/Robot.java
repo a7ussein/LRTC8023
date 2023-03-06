@@ -215,16 +215,16 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-      rollerMotor.set(1); // shoot the cube out then drive forward for 8.5 wheel rotations
+        rollerMotor.set(1); // shoot the cube out then drive forward for 8.5 wheel rotations
         if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
           rollerMotor.set(0);
           drive.tankDrive(0.3, 0.3);
         } else {
           drive.tankDrive(0, 0);
-        }
+      }
         break;
-        case kDepositAndBalance:
-        /*
+      case kDepositAndBalance:
+               /*
          * This auto is going to:
          * 1. eject the cube which takes about 2 seconds,
          * 2. balance which takes about 10 seconds 
@@ -236,7 +236,6 @@ public class Robot extends TimedRobot {
         vAngleTest = vAngleTest * -1;
 
       if (m_starting && vAngleTest > 5) {
-        // rollerMotor.set(0);
         m_onRamp = true;
         m_ascending = true;
         m_starting = false;
