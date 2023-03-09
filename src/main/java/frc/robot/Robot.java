@@ -9,6 +9,8 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -80,6 +82,10 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("gsdDepositBalance", kgsdDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
 
+    // Camera init:
+    UsbCamera camera = CameraServer.startAutomaticCapture();
+    camera.setResolution(640, 480);
+    
     rightFrontMotor.restoreFactoryDefaults();
     rightBackMotor.restoreFactoryDefaults();
     leftFrontMotor.restoreFactoryDefaults();
@@ -412,9 +418,15 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // System.out.println(Math.round(gyro.getAngle()));
     // drive controls
-    double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
-    double turn = -driveController.getRawAxis(4);
-    drive.arcadeDrive(Speed * 0.9 , turn *0.3); // slowed speed down to 90% and slowed turning to 50 so we have better control
+    double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
+    double turn = -driveController.getRawAxis(4) * 0.3;
+    if(driveController.getBButton()){
+      Speed = Speed/2;
+      turn = turn/2;
+      drive.arcadeDrive(Speed, turn);
+    }else{
+      drive.arcadeDrive(Speed, turn);
+    }
 
     // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
