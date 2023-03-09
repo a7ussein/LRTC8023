@@ -11,6 +11,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
@@ -25,11 +26,16 @@ public class Robot extends TimedRobot {
   private static final String kDriveForwardAndBalance = "Drive Forward and balance";
   private static final String kDepositAndDriveForward = "Deposit Cupe And Drive Forward";
   private static final String kDepositAndBalance = "Deposit Cube and Balance";
+  private static final String kgsdDepositAndBalance = "GSD Deposit and Balance Code";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
   // Inputs
   private ADIS16470_IMU gyro = new ADIS16470_IMU();
+
+
+  // variable to keep track of time
+  private double startTime;
 
   // Outputs
   private CANSparkMax leftFrontMotor = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -68,9 +74,10 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Auto stuff:
     m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
-    m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance);
+    // m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance); // don't need this to show on shuffle board.
     m_chooser.addOption("DepositAndDriveForward", kDepositAndDriveForward);
     m_chooser.addOption("DepositCubeAndBalance", kDepositAndBalance);
+    m_chooser.addOption("gsdDepositBalance", kgsdDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     rightFrontMotor.restoreFactoryDefaults();
@@ -109,6 +116,8 @@ public class Robot extends TimedRobot {
     m_autoSelected = m_chooser.getSelected();
     System.out.println("Auto selected: " + m_autoSelected);
 
+    startTime = Timer.getFPGATimestamp();
+
     leftEncoder.setPosition(0);
     gyro.reset();
 
@@ -142,11 +151,19 @@ public class Robot extends TimedRobot {
     double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
     double vAngleTest = gyro.getYComplementaryAngle(); // vAngleTes is for YComplementartAngle and I use it for autos that I am testing, I know I could just use vAngle that is in the kDriveForwardAndBalance but I just don't want to miss around with it. 
 
-
+    // timer related stuff:
+    double time = Timer.getFPGATimestamp();
+    System.out.println(time - startTime);
+    
     switch (m_autoSelected) {
-      // Don't play around with the Balancing auto cuz it is good as it is
+      // kDriveForwardAndBalance is the base code
       case kDriveForwardAndBalance:
-        enableIntakeMotors(true);
+      if(time - startTime < 5){
+        rollerMotor.set(.7);
+       }else{
+        rollerMotor.set(0);
+       }
+      enableIntakeMotors(true);
        double vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
 
         // rio is mounted backward
@@ -215,22 +232,29 @@ public class Robot extends TimedRobot {
         }
         break;
       case kDepositAndDriveForward:
-        rollerMotor.set(1); // shoot the cube out then drive forward for 8.5 wheel rotations
+       // shoot the cube out then drive forward for 8.5 wheel rotations
+       if(time - startTime < 5){
+        rollerMotor.set(.7);
+       }else{
+        rollerMotor.set(0);
+       }
         if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
-          rollerMotor.set(0);
           drive.tankDrive(0.3, 0.3);
         } else {
           drive.tankDrive(0, 0);
       }
         break;
       case kDepositAndBalance:
-               /*
+          /*
          * This auto is going to:
          * 1. eject the cube which takes about 2 seconds,
          * 2. balance which takes about 10 seconds 
          */
-        rollerMotor.set(1); // eject the cube
-
+        if(time - startTime < 5){
+          rollerMotor.set(.7);
+         }else{
+          rollerMotor.set(0);
+         }
         // BALANCE 
         // rio is mounted backward
         vAngleTest = vAngleTest * -1;
@@ -297,7 +321,79 @@ public class Robot extends TimedRobot {
         }
       }
         break;
-        case kDefaultAuto:
+      case kgsdDepositAndBalance:
+      if(time - startTime < 5){
+        rollerMotor.set(.7);
+       }else{
+        rollerMotor.set(0);
+       }
+        enableIntakeMotors(true);
+        vAngleTest = vAngleTest * -1;
+
+        if (m_starting && vAngleTest > 5) {
+          m_onRamp = true;
+          m_ascending = true;
+          m_starting = false;
+        }
+
+        if (m_ascending && vAngleTest < 0) {
+          m_ascending = false;
+          m_onFlat = true;
+        }
+
+        if (m_onFlat && Math.abs(vAngleTest) > 5) {
+          m_onFlat = false;
+          m_descending = true;
+        }
+
+        if (m_descending && Math.abs(vAngleTest) < 1.5) {
+          m_descending = false;
+          m_onRamp = false;
+          m_exitingRamp = true;
+          m_position = Math.abs(leftPosition);
+        }
+
+        if (m_starting || m_ascending) {
+          drive.tankDrive(0.55, 0.55);
+        }
+
+        if (m_onFlat || m_descending) {
+          drive.tankDrive(0.2, 0.2);
+        }
+
+        if (m_exitingRamp){
+          if (Math.abs(leftPosition) < m_position + 4){
+            drive.tankDrive(0.3, 0.3);
+          }
+          else {
+            m_exitingRamp = false;
+            m_startBalancing = true;
+            //leftEncoder.setPosition(0);
+            m_position = leftPosition - 20;
+          }
+        }
+
+        if (m_startBalancing) {
+          if (leftPosition > m_position) {
+          //if (Math.abs(vAngle) > 10) {
+            drive.tankDrive(-0.6, -0.6);
+          } else {
+            m_startBalancing = false;
+            m_balancing = true;
+          }
+        }
+
+        if (m_balancing) {
+          if (vAngleTest > 4) {
+            drive.tankDrive(0.278, 0.278);
+          }
+          if (vAngleTest < -4) {
+            drive.tankDrive(-0.278, -0.278);
+          }
+        }
+
+        break;
+      case kDefaultAuto:
         default:
         break;
     }
