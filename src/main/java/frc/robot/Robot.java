@@ -422,13 +422,15 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // System.out.println(Math.round(gyro.getAngle()));
     // drive controls
-    double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
+    double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4) * 0.3;
-    if(driveController.getBButton()){
+    if(driveController.getBButton()){ // if the B button is pressed the speed is going to be divided in half
+      Speed = Speed * 0.9;
       Speed = Speed/2;
       drive.arcadeDrive(Speed, turn);
     }else{
-      drive.arcadeDrive(limiter.calculate(Speed), turn);
+      Speed = -driveController.getRawAxis(1) * 0.9; // speed is reset to 90%
+      drive.arcadeDrive(limiter.calculate(Speed), turn); // if the B button is not pressed the "input ramping" is going to be on
     }
 
     // intake RaisingMotor Control
