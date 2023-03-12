@@ -87,8 +87,10 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // Camera init:
-    UsbCamera camera = CameraServer.startAutomaticCapture();
+    UsbCamera camera = CameraServer.startAutomaticCapture(0);
     camera.setResolution(640, 480);
+    // camera.setFPS(20);
+
 
     rightFrontMotor.restoreFactoryDefaults();
     rightBackMotor.restoreFactoryDefaults();
@@ -118,6 +120,9 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("YComplementaryAngle", gyro.getYComplementaryAngle() * -1);
     SmartDashboard.putNumber("YAW angle", gyro.getAngle());
     SmartDashboard.putNumber("Imu Turn Rate", gyro.getRate());
+    String msg = "Message";
+    String ahmed = "Good Luck Kids";
+    SmartDashboard.putString(msg, ahmed);
   }
 
   @Override
