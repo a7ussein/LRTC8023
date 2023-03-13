@@ -1,6 +1,5 @@
 package frc.robot;
 
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
@@ -24,26 +23,16 @@ import edu.wpi.first.wpilibj.DigitalInput;
 
 public class Robot extends TimedRobot {
 
-  // Auto Stuff:
+  // Auto Selection:
   private static final String kDefaultAuto = "Nothing Auto";
-  private static final String kDriveForwardAndBalance = "Drive Forward and balance";
-  private static final String kDepositAndDriveForward = "Deposit Cupe And Drive Forward";
-  private static final String kDepositAndBalance = "Deposit Cube and Balance";
-  private static final String kgsdDepositAndBalance = "GSD Deposit and Balance Code";
+  private static final String kDriveForwardAndBalance = "Base AutoBalance code"; // Hidden from SmartDashboard 
+  private static final String kDepositAndDriveForward = "Mobility";
+  private static final String kDepositAndBalance = "Deposit & Balance";
+  private static final String kgsdDepositAndBalance = "GSD"; 
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
-  // Inputs
-  private ADIS16470_IMU gyro = new ADIS16470_IMU();
-
-
-  // variable to keep track of time
-  private double startTime;
-
-  // SlewRateLimiter variable:
-  SlewRateLimiter limiter = new SlewRateLimiter(0.5);
-
-  // Outputs
+  // Driving Motors
   private CANSparkMax leftFrontMotor = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
   private CANSparkMax leftBackMotor = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
   private CANSparkMax rightFrontMotor = new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -54,36 +43,37 @@ public class Robot extends TimedRobot {
 
   DifferentialDrive drive = new DifferentialDrive(leftControllerGroup, rightControllerGroup);
 
-  RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
-  RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
-
-  DigitalInput frontLimitSensor = new DigitalInput(8);
-  DigitalInput backLimitSensor = new DigitalInput(9);
-
   // Intake Motors
   private WPI_VictorSPX rollerMotor = new WPI_VictorSPX(5);
   private WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6);
+    
+  // Encoders
+  RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
+  RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
 
-  // Unit Conversion
-  // private final double kDriveTick2Feet = 1.0 / 4096 * 6 * Math.PI / 12;
-
-  // This should now disblay the number of wheel rotations.
-  public double getAverageEncoderDistance() {
-    return ((Math.abs(leftEncoder.getPosition()) + (rightEncoder.getPosition()) / 2)/8.46);
-  }
+  //Sensors
+  private ADIS16470_IMU gyro = new ADIS16470_IMU();
+  DigitalInput frontLimitSensor = new DigitalInput(8);
+  DigitalInput backLimitSensor = new DigitalInput(9);
 
   // Controllers
   private XboxController driveController = new XboxController(0);
   private XboxController intakeController = new XboxController(1);
 
+  //variables
+  private final double encoder2inches = 1/8.46;  // Unit Conversion
+  private double startTime;   // Time Tracker
+  SlewRateLimiter limiter = new SlewRateLimiter(0.5);   // Input Ramp
+
+
   @Override
   public void robotInit() {
-    // Auto stuff:
-    m_chooser.setDefaultOption("DoNothing", kDefaultAuto);
+    // Auto Selection:
+    m_chooser.setDefaultOption("Nothing Auto", kDefaultAuto);
     // m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance); // don't need this to show on shuffle board.
-    m_chooser.addOption("DepositAndDriveForward", kDepositAndDriveForward);
-    m_chooser.addOption("DepositCubeAndBalance", kDepositAndBalance);
-    m_chooser.addOption("gsdDepositBalance", kgsdDepositAndBalance);
+    m_chooser.addOption("Mobility", kDepositAndDriveForward);
+    m_chooser.addOption("Deposit & Balance", kDepositAndBalance);
+    m_chooser.addOption("GSD", kgsdDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // Camera init:
@@ -91,7 +81,7 @@ public class Robot extends TimedRobot {
     camera.setResolution(640, 480);
     // camera.setFPS(20);
 
-
+    
     rightFrontMotor.restoreFactoryDefaults();
     rightBackMotor.restoreFactoryDefaults();
     leftFrontMotor.restoreFactoryDefaults();
@@ -110,33 +100,28 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-    double leftPosition = leftEncoder.getPosition();
-    SmartDashboard.putNumber("Left Position", leftPosition);
-    SmartDashboard.putNumber("Left encoder value", leftEncoder.getPosition() );
-    SmartDashboard.putNumber("Right encoder value", rightEncoder.getPosition());
-    SmartDashboard.putNumber("left Encoder Velocity", leftEncoder.getVelocity());
-    SmartDashboard.putNumber("right Encoder velocity", rightEncoder.getVelocity());
-    SmartDashboard.putNumber("Average Encoder Distance in wheel rotations", getAverageEncoderDistance());
-    SmartDashboard.putNumber("YComplementaryAngle", gyro.getYComplementaryAngle() * -1);
-    SmartDashboard.putNumber("YAW angle", gyro.getAngle());
-    SmartDashboard.putNumber("Imu Turn Rate", gyro.getRate());
     String msg = "Message";
-    String ahmed = "Good Luck Kids";
-    SmartDashboard.putString(msg, ahmed);
+    String mobility = "Mobility: Deposit Cube and Drive Away for 8.5 wheel rotations";
+    String depositAndBalance = "Deposit & Balance: Ask Ahmed before if this was tested or not";
+    String gsd = "GSD: Balance Auto that was used during GSD";
+    SmartDashboard.putString(msg, mobility);
+    SmartDashboard.putString(msg, depositAndBalance);
+    SmartDashboard.putString(msg, gsd);
+
   }
 
   @Override
   public void autonomousInit() {
     // Auto Stuff:
     m_autoSelected = m_chooser.getSelected();
-    System.out.println("Auto selected: " + m_autoSelected);
+    // System.out.println("Auto selected: " + m_autoSelected);
 
     startTime = Timer.getFPGATimestamp();
 
     leftEncoder.setPosition(0);
     gyro.reset();
 
-    // Balancing auto booleans inits -- Don't play around with them
+    // Balancing auto booleans inits
     m_starting = true;
     m_onRamp = false;
     m_descending = false;
@@ -171,14 +156,14 @@ public class Robot extends TimedRobot {
     System.out.println(time - startTime);
     
     switch (m_autoSelected) {
-      // kDriveForwardAndBalance is the base code
+      // kDriveForwardAndBalance is the base code don't play around with it
       case kDriveForwardAndBalance:
       if(time - startTime < 5){
         rollerMotor.set(.7);
        }else{
         rollerMotor.set(0);
        }
-      enableIntakeMotors(true);
+      enableIntakeBreak(true);
        double vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
 
         // rio is mounted backward
@@ -342,7 +327,7 @@ public class Robot extends TimedRobot {
        }else{
         rollerMotor.set(0);
        }
-        enableIntakeMotors(true);
+        enableIntakeBreak(true);
         vAngleTest = vAngleTest * -1;
 
         if (m_starting && vAngleTest > 5) {
@@ -416,8 +401,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    enableDrivingMotors(true);
-    enableIntakeMotors(true);
+    enableDrivingBreak(true);
+    enableIntakeBreak(true);
 
     leftEncoder.setPosition(0);
     rightEncoder.setPosition(0);
@@ -427,19 +412,19 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // System.out.println(Math.round(gyro.getAngle()));
     // drive controls
-    double Speed = -driveController.getRawAxis(1); // for this axis: up is negative, down is positive
+    double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4) * 0.3;
-    if(driveController.getBButton()){ // if the B button is pressed the speed is going to be divided in half
-      Speed = Speed * 0.9;
-      Speed = Speed/2;
-      drive.arcadeDrive(Speed, turn);
+    if(driveController.getBButton()){ // if the RightBumber is pressed the speed is going to be divided in half
+      drive.arcadeDrive(Speed/2, turn);
+    }else if(driveController.getRightBumper() && driveController.getLeftBumper()){
+      drive.arcadeDrive(Speed *.27, turn/2);
     }else{
-      Speed = -driveController.getRawAxis(1) * 0.9; // speed is reset to 90%
-      drive.arcadeDrive(limiter.calculate(Speed), turn); // if the B button is not pressed the "input ramping" is going to be on
+      drive.arcadeDrive(limiter.calculate(Speed), turn); // if the no button is pressed the "input ramping" is going to be on
     }
 
     // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
+    raisingMotor.set(raisingPower * 0.6);
     // deadBand -- just cuz, why not?
     if (Math.abs(raisingPower) < 0.05) {
       raisingPower = 0;
@@ -454,13 +439,10 @@ public class Robot extends TimedRobot {
     if (raisingPower > 0 && !backLimitSensor.get()) {
       raisingPower = 0;
     }
-
-    raisingMotor.set(raisingPower * 0.6);
     if ((raisingPower < 0 && frontLimitSensor.get()) || (raisingPower > 0 && backLimitSensor.get())) {
     }else{
       raisingMotor.set(0);
-    }
-
+    }    
     // intake Rollers control
     double rollersPower = 0;
     // press Y if you want to pick up an object, and press A if you want to shoot
@@ -476,15 +458,27 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledInit() {
-    enableDrivingMotors(true);
-    enableIntakeMotors(true);
+    enableDrivingBreak(true);
+    enableIntakeBreak(true);
   }
 
   @Override
-  public void disabledPeriodic() {
-  }
+  public void disabledPeriodic() {}
 
-  private void enableDrivingMotors(boolean on) {
+  @Override
+  public void testInit() {}
+
+  @Override
+  public void testPeriodic() {}
+
+  @Override
+  public void simulationInit() {}
+
+  @Override
+  public void simulationPeriodic() {}
+  
+  //Functions
+  private void enableDrivingBreak(boolean on) {
     IdleMode dMotormode;
     if (on) {
       dMotormode = IdleMode.kBrake;
@@ -497,7 +491,7 @@ public class Robot extends TimedRobot {
     rightBackMotor.setIdleMode(dMotormode);
   }
 
-  private void enableIntakeMotors(boolean on) {
+  private void enableIntakeBreak(boolean on) {
     NeutralMode iMotorMode;
     if (on) {
       iMotorMode = NeutralMode.Brake;
@@ -507,22 +501,5 @@ public class Robot extends TimedRobot {
 
     raisingMotor.setNeutralMode(iMotorMode);
     rollerMotor.setNeutralMode(iMotorMode);
-  }
-  // --------------------------
-
-  @Override
-  public void testInit() {
-  }
-
-  @Override
-  public void testPeriodic() {
-  }
-
-  @Override
-  public void simulationInit() {
-  }
-
-  @Override
-  public void simulationPeriodic() {
   }
 }
