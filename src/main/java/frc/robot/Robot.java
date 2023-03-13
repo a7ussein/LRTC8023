@@ -414,7 +414,7 @@ public class Robot extends TimedRobot {
     // drive controls
     double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4) * 0.3;
-    if(driveController.getRightBumber()){ // if the RightBumber is pressed the speed is going to be divided in half
+    if(driveController.getRightBumper()){ // if the RightBumber is pressed the speed is going to be divided in half
       drive.arcadeDrive(Speed/2, turn);
     }else if(driveController.getRightBumper() && driveController.getLeftBumper()){
       drive.arcadeDrive(Speed *.27, turn/2);
