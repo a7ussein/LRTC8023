@@ -105,8 +105,8 @@ public class Robot extends TimedRobot {
     String depositAndBalance = "Deposit & Balance: Ask Ahmed before if this was tested or not";
     String gsd = "GSD: Balance Auto that was used during GSD";
     SmartDashboard.putString(msg, mobility);
-    SmartDashboard.putString(msg, depositAndBalance);
-    SmartDashboard.putString(msg, gsd);
+    SmartDashboard.putString(depositAndBalance, depositAndBalance);
+    SmartDashboard.putString(gsd, gsd);
 
   }
 
