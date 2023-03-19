@@ -4,14 +4,15 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
@@ -19,7 +20,6 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.DigitalInput;
 
 public class Robot extends TimedRobot {
 
@@ -46,7 +46,13 @@ public class Robot extends TimedRobot {
   // Intake Motors
   private WPI_VictorSPX rollerMotor = new WPI_VictorSPX(5);
   private WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6);
+
+  /* let's say we have a nio for our arm
+  go uncomment the code for it that is in teliop periodic*/ 
+  // private CANSparkMax armMotor = new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless);
+  // RelativeEncoder armEncoder = armMotor.getEncoder();
     
+
   // Encoders
   RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
   RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
@@ -63,7 +69,7 @@ public class Robot extends TimedRobot {
   //variables
   private final double encoder2inches = 1/8.46;  // Unit Conversion
   private double startTime;   // Time Tracker
-  SlewRateLimiter limiter = new SlewRateLimiter(0.5);   // Input Ramp
+  SlewRateLimiter limiter = new SlewRateLimiter(1.0);   // Input Ramp
 
 
   @Override
@@ -73,7 +79,7 @@ public class Robot extends TimedRobot {
     // m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance); // don't need this to show on shuffle board.
     m_chooser.addOption("Mobility", kDepositAndDriveForward);
     m_chooser.addOption("Deposit & Balance", kDepositAndBalance);
-    m_chooser.addOption("GSD", kgsdDepositAndBalance);
+    // m_chooser.addOption("GSD", kgsdDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // Camera init:
@@ -107,7 +113,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putString(msg, mobility);
     SmartDashboard.putString(depositAndBalance, depositAndBalance);
     SmartDashboard.putString(gsd, gsd);
-
+    // SmartDashboard.putNumber("arm encoder",armEncoder.getPosition());
   }
 
   @Override
@@ -158,7 +164,7 @@ public class Robot extends TimedRobot {
     switch (m_autoSelected) {
       // kDriveForwardAndBalance is the base code don't play around with it
       case kDriveForwardAndBalance:
-      if(time - startTime < 5){
+      if(time - startTime < 2){
         rollerMotor.set(.7);
        }else{
         rollerMotor.set(0);
@@ -233,7 +239,7 @@ public class Robot extends TimedRobot {
         break;
       case kDepositAndDriveForward:
        // shoot the cube out then drive forward for 8.5 wheel rotations
-       if(time - startTime < 5){
+       if(time - startTime < 2){
         rollerMotor.set(.7);
        }else{
         rollerMotor.set(0);
@@ -250,7 +256,7 @@ public class Robot extends TimedRobot {
          * 1. eject the cube which takes about 2 seconds,
          * 2. balance which takes about 10 seconds 
          */
-        if(time - startTime < 5){
+        if(time - startTime < 2){
           rollerMotor.set(.7);
          }else{
           rollerMotor.set(0);
@@ -413,18 +419,18 @@ public class Robot extends TimedRobot {
     // System.out.println(Math.round(gyro.getAngle()));
     // drive controls
     double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
-    double turn = -driveController.getRawAxis(4) * 0.3;
-    if(driveController.getRightBumper()){ // if the RightBumber is pressed the speed is going to be divided in half
-      drive.arcadeDrive(Speed/2, turn);
-    }else if(driveController.getRightBumper() && driveController.getLeftBumper()){
-      drive.arcadeDrive(Speed *.27, turn/2);
+    double turn = -driveController.getRawAxis(4) * 0.55;
+
+    if(driveController.getRightBumper()){ // if the RightBumber is pressed then slow mode is going to be enabled
+      drive.arcadeDrive((Speed/2), 0.3);
+    }else if(driveController.getLeftBumper()){ // if both right and left bumbers are pressed then ultra slow mode is going to be enabled
+      drive.arcadeDrive(0, 0);
     }else{
       drive.arcadeDrive(limiter.calculate(Speed), turn); // if the no button is pressed the "input ramping" is going to be on
     }
 
     // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
-    raisingMotor.set(raisingPower * 0.6);
     // deadBand -- just cuz, why not?
     if (Math.abs(raisingPower) < 0.05) {
       raisingPower = 0;
@@ -439,7 +445,9 @@ public class Robot extends TimedRobot {
     if (raisingPower > 0 && !backLimitSensor.get()) {
       raisingPower = 0;
     }
+
     if ((raisingPower < 0 && frontLimitSensor.get()) || (raisingPower > 0 && backLimitSensor.get())) {
+      raisingMotor.set(raisingPower * 0.6);
     }else{
       raisingMotor.set(0);
     }    
@@ -454,6 +462,27 @@ public class Robot extends TimedRobot {
     }
     // rollersPower = intakeController.getRawAxis(4);
     rollerMotor.set(ControlMode.PercentOutput, rollersPower);
+
+    //let's say we have a nio for our arm go uncomment the code for break mode
+    // if(intakeController.getBButton()){
+    //   armMotor.set(0.1);
+    // }else if(intakeController.getXButton()){
+    //   armMotor.set(-0.1);
+    // }else{
+    //   armMotor.set(0);
+    // }
+
+    // if(intakeController.getBButton()){
+    //   if(Math.abs(armEncoder.getPosition()) < 3){
+    //     armMotor.set(0.1);
+    //   }else{
+    //     armMotor.set(0);
+    //   }
+    // }else if(armEncoder.getPosition() > 0){
+    //   armMotor.set(-0.1);
+    // }else{
+    //   armMotor.set(0);
+    // }
   }
 
   @Override
@@ -489,6 +518,7 @@ public class Robot extends TimedRobot {
     leftBackMotor.setIdleMode(dMotormode);
     rightFrontMotor.setIdleMode(dMotormode);
     rightBackMotor.setIdleMode(dMotormode);
+    // armMotor.setIdleMode(dMotormode);
   }
 
   private void enableIntakeBreak(boolean on) {
