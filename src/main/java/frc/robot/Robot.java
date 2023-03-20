@@ -164,7 +164,7 @@ public class Robot extends TimedRobot {
     switch (m_autoSelected) {
       // kDriveForwardAndBalance is the base code don't play around with it
       case kDriveForwardAndBalance:
-      if(time - startTime < 2){
+      if(time - startTime < 1){
         rollerMotor.set(.7);
        }else{
         rollerMotor.set(0);
@@ -239,7 +239,7 @@ public class Robot extends TimedRobot {
         break;
       case kDepositAndDriveForward:
        // shoot the cube out then drive forward for 8.5 wheel rotations
-       if(time - startTime < 2){
+       if(time - startTime < 1){
         rollerMotor.set(.7);
        }else{
         rollerMotor.set(0);
@@ -256,7 +256,7 @@ public class Robot extends TimedRobot {
          * 1. eject the cube which takes about 2 seconds,
          * 2. balance which takes about 10 seconds 
          */
-        if(time - startTime < 2){
+        if(time - startTime < 1){
           rollerMotor.set(.7);
          }else{
           rollerMotor.set(0);
@@ -320,84 +320,12 @@ public class Robot extends TimedRobot {
 
       if (m_balancing) {
         if (vAngleTest > 2) {
-          drive.tankDrive(0.287, 0.287);
+          drive.tankDrive(0.27, 0.27);
         }
         if (vAngleTest < -2) {
-          drive.tankDrive(-0.287, -0.287);
+          drive.tankDrive(-0.27, -0.27);
         }
       }
-        break;
-      case kgsdDepositAndBalance:
-      if(time - startTime < 5){
-        rollerMotor.set(.7);
-       }else{
-        rollerMotor.set(0);
-       }
-        enableIntakeBreak(true);
-        vAngleTest = vAngleTest * -1;
-
-        if (m_starting && vAngleTest > 5) {
-          m_onRamp = true;
-          m_ascending = true;
-          m_starting = false;
-        }
-
-        if (m_ascending && vAngleTest < 0) {
-          m_ascending = false;
-          m_onFlat = true;
-        }
-
-        if (m_onFlat && Math.abs(vAngleTest) > 5) {
-          m_onFlat = false;
-          m_descending = true;
-        }
-
-        if (m_descending && Math.abs(vAngleTest) < 1.5) {
-          m_descending = false;
-          m_onRamp = false;
-          m_exitingRamp = true;
-          m_position = Math.abs(leftPosition);
-        }
-
-        if (m_starting || m_ascending) {
-          drive.tankDrive(0.55, 0.55);
-        }
-
-        if (m_onFlat || m_descending) {
-          drive.tankDrive(0.2, 0.2);
-        }
-
-        if (m_exitingRamp){
-          if (Math.abs(leftPosition) < m_position + 4){
-            drive.tankDrive(0.3, 0.3);
-          }
-          else {
-            m_exitingRamp = false;
-            m_startBalancing = true;
-            //leftEncoder.setPosition(0);
-            m_position = leftPosition - 20;
-          }
-        }
-
-        if (m_startBalancing) {
-          if (leftPosition > m_position) {
-          //if (Math.abs(vAngle) > 10) {
-            drive.tankDrive(-0.6, -0.6);
-          } else {
-            m_startBalancing = false;
-            m_balancing = true;
-          }
-        }
-
-        if (m_balancing) {
-          if (vAngleTest > 4) {
-            drive.tankDrive(0.278, 0.278);
-          }
-          if (vAngleTest < -4) {
-            drive.tankDrive(-0.278, -0.278);
-          }
-        }
-
         break;
       case kDefaultAuto:
         default:
@@ -420,15 +348,27 @@ public class Robot extends TimedRobot {
     // drive controls
     double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4) * 0.55;
+    double vAngleTest = gyro.getYComplementaryAngle();
+    vAngleTest = vAngleTest * -1; //rio is mounted backwards
 
     if(driveController.getRightBumper()){ // if the RightBumber is pressed then slow mode is going to be enabled
-      drive.arcadeDrive((Speed/2), 0.3);
+      drive.arcadeDrive(Speed/2, turn);
     }else if(driveController.getLeftBumper()){ // if both right and left bumbers are pressed then ultra slow mode is going to be enabled
       drive.arcadeDrive(0, 0);
     }else{
       drive.arcadeDrive(limiter.calculate(Speed), turn); // if the no button is pressed the "input ramping" is going to be on
     }
 
+    //auto balance using the A Button
+    if(driveController.getAButton()){
+      if (vAngleTest > 2) {
+        drive.tankDrive(0.27, 0.27);
+      }
+      if (vAngleTest < -2) {
+        drive.tankDrive(-0.27, -0.27);
+      }
+    }
+  
     // intake RaisingMotor Control
     double raisingPower = intakeController.getRawAxis(1);
     // deadBand -- just cuz, why not?
@@ -533,3 +473,80 @@ public class Robot extends TimedRobot {
     rollerMotor.setNeutralMode(iMotorMode);
   }
 }
+
+
+// GSD auto Balance code 
+/*
+ * case kgsdDepositAndBalance:
+      if(time - startTime < 5){
+        rollerMotor.set(.7);
+       }else{
+        rollerMotor.set(0);
+       }
+        enableIntakeBreak(true);
+        vAngleTest = vAngleTest * -1;
+
+        if (m_starting && vAngleTest > 5) {
+          m_onRamp = true;
+          m_ascending = true;
+          m_starting = false;
+        }
+
+        if (m_ascending && vAngleTest < 0) {
+          m_ascending = false;
+          m_onFlat = true;
+        }
+
+        if (m_onFlat && Math.abs(vAngleTest) > 5) {
+          m_onFlat = false;
+          m_descending = true;
+        }
+
+        if (m_descending && Math.abs(vAngleTest) < 1.5) {
+          m_descending = false;
+          m_onRamp = false;
+          m_exitingRamp = true;
+          m_position = Math.abs(leftPosition);
+        }
+
+        if (m_starting || m_ascending) {
+          drive.tankDrive(0.55, 0.55);
+        }
+
+        if (m_onFlat || m_descending) {
+          drive.tankDrive(0.2, 0.2);
+        }
+
+        if (m_exitingRamp){
+          if (Math.abs(leftPosition) < m_position + 4){
+            drive.tankDrive(0.3, 0.3);
+          }
+          else {
+            m_exitingRamp = false;
+            m_startBalancing = true;
+            //leftEncoder.setPosition(0);
+            m_position = leftPosition - 20;
+          }
+        }
+
+        if (m_startBalancing) {
+          if (leftPosition > m_position) {
+          //if (Math.abs(vAngle) > 10) {
+            drive.tankDrive(-0.6, -0.6);
+          } else {
+            m_startBalancing = false;
+            m_balancing = true;
+          }
+        }
+
+        if (m_balancing) {
+          if (vAngleTest > 4) {
+            drive.tankDrive(0.278, 0.278);
+          }
+          if (vAngleTest < -4) {
+            drive.tankDrive(-0.278, -0.278);
+          }
+        }
+
+        break;
+ */
