@@ -1,6 +1,7 @@
 package frc.robot.autonomous;
 
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Components;
 
 public abstract class AutonomousBase {
     protected Components components;
