@@ -25,10 +25,9 @@ public class Robot extends TimedRobot {
 
   // Auto Selection:
   private static final String kDefaultAuto = "Nothing Auto";
-  private static final String kDriveForwardAndBalance = "Base AutoBalance code"; // Hidden from SmartDashboard 
+  // private static final String kDriveForwardAndBalance = "Base AutoBalance code"; Hidden from SmartDashboard 
   private static final String kDepositAndDriveForward = "Mobility";
   private static final String kDepositAndBalance = "Deposit & Balance";
-  private static final String kgsdDepositAndBalance = "GSD"; 
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
@@ -51,7 +50,6 @@ public class Robot extends TimedRobot {
   go uncomment the code for it that is in teliop periodic*/ 
   // private CANSparkMax armMotor = new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless);
   // RelativeEncoder armEncoder = armMotor.getEncoder();
-    
 
   // Encoders
   RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
@@ -79,12 +77,12 @@ public class Robot extends TimedRobot {
     // m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance); // don't need this to show on shuffle board.
     m_chooser.addOption("Mobility", kDepositAndDriveForward);
     m_chooser.addOption("Deposit & Balance", kDepositAndBalance);
-    // m_chooser.addOption("GSD", kgsdDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // Camera init:
     UsbCamera camera = CameraServer.startAutomaticCapture(0);
-    camera.setResolution(640, 480);
+    camera.setResolution(400, 222
+    );
 
     
     rightFrontMotor.restoreFactoryDefaults();
@@ -105,13 +103,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-    String msg = "Message";
-    String mobility = "Mobility: Deposit Cube and Drive Away for 8.5 wheel rotations";
-    String depositAndBalance = "Deposit & Balance: Ask Ahmed before if this was tested or not";
-    String gsd = "GSD: Balance Auto that was used during GSD";
-    SmartDashboard.putString(msg, mobility);
-    SmartDashboard.putString(depositAndBalance, depositAndBalance);
-    SmartDashboard.putString(gsd, gsd);
     // SmartDashboard.putNumber("arm encoder",armEncoder.getPosition());
   }
 
@@ -161,81 +152,6 @@ public class Robot extends TimedRobot {
     System.out.println(time - startTime);
     
     switch (m_autoSelected) {
-      // kDriveForwardAndBalance is the base code don't play around with it
-      case kDriveForwardAndBalance:
-      if(time - startTime < 1){
-        rollerMotor.set(.7);
-       }else{
-        rollerMotor.set(0);
-       }
-      enableIntakeBreak(true);
-       double vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
-
-        // rio is mounted backward
-        vAngle = vAngle * -1;
-
-        if (m_starting && vAngle > 5) {
-          m_onRamp = true;
-          m_ascending = true;
-          m_starting = false;
-        }
-
-        if (m_ascending && vAngle < 0) {
-          m_ascending = false;
-          m_onFlat = true;
-        }
-
-        if (m_onFlat && Math.abs(vAngle) > 5) {
-          m_onFlat = false;
-          m_descending = true;
-        }
-
-        if (m_descending && Math.abs(vAngle) < 2) {
-          m_descending = false;
-          m_onRamp = false;
-          m_exitingRamp = true;
-          m_position = Math.abs(leftPosition);
-        }
-
-        if (m_starting || m_ascending) {
-          drive.tankDrive(0.55, 0.55);
-        }
-
-        if (m_onFlat || m_descending) {
-          drive.tankDrive(0.2, 0.2);
-        }
-
-        if (m_exitingRamp){
-          if (Math.abs(leftPosition) < m_position + 4){
-            drive.tankDrive(0.3, 0.3);
-          }
-          else {
-            m_exitingRamp = false;
-            m_startBalancing = true;
-            //leftEncoder.setPosition(0);
-            m_position = leftPosition - 20;
-          }
-        }
-      
-        if (m_startBalancing) {
-          if (leftPosition > m_position) {
-          //if (Math.abs(vAngle) > 10) {
-            drive.tankDrive(-0.55, -0.55);
-          } else {
-            m_startBalancing = false;
-            m_balancing = true;
-          }
-        }
-
-        if (m_balancing) {
-          if (vAngle > 2) {
-            drive.tankDrive(0.3, 0.3);
-          }
-          if (vAngle < -2) {
-            drive.tankDrive(-0.3, -0.3);
-          }
-        }
-        break;
       case kDepositAndDriveForward:
        // shoot the cube out then drive forward for 8.5 wheel rotations
        if(time - startTime < 1){
@@ -472,6 +388,86 @@ public class Robot extends TimedRobot {
     rollerMotor.setNeutralMode(iMotorMode);
   }
 }
+
+
+// Base Balancing Code:
+/*
+ * // kDriveForwardAndBalance is the base code don't play around with it
+      case kDriveForwardAndBalance:
+      if(time - startTime < 1){
+        rollerMotor.set(.7);
+       }else{
+        rollerMotor.set(0);
+       }
+      enableIntakeBreak(true);
+       double vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
+
+        // rio is mounted backward
+        vAngle = vAngle * -1;
+
+        if (m_starting && vAngle > 5) {
+          m_onRamp = true;
+          m_ascending = true;
+          m_starting = false;
+        }
+
+        if (m_ascending && vAngle < 0) {
+          m_ascending = false;
+          m_onFlat = true;
+        }
+
+        if (m_onFlat && Math.abs(vAngle) > 5) {
+          m_onFlat = false;
+          m_descending = true;
+        }
+
+        if (m_descending && Math.abs(vAngle) < 2) {
+          m_descending = false;
+          m_onRamp = false;
+          m_exitingRamp = true;
+          m_position = Math.abs(leftPosition);
+        }
+
+        if (m_starting || m_ascending) {
+          drive.tankDrive(0.55, 0.55);
+        }
+
+        if (m_onFlat || m_descending) {
+          drive.tankDrive(0.2, 0.2);
+        }
+
+        if (m_exitingRamp){
+          if (Math.abs(leftPosition) < m_position + 4){
+            drive.tankDrive(0.3, 0.3);
+          }
+          else {
+            m_exitingRamp = false;
+            m_startBalancing = true;
+            //leftEncoder.setPosition(0);
+            m_position = leftPosition - 20;
+          }
+        }
+      
+        if (m_startBalancing) {
+          if (leftPosition > m_position) {
+          //if (Math.abs(vAngle) > 10) {
+            drive.tankDrive(-0.55, -0.55);
+          } else {
+            m_startBalancing = false;
+            m_balancing = true;
+          }
+        }
+
+        if (m_balancing) {
+          if (vAngle > 2) {
+            drive.tankDrive(0.3, 0.3);
+          }
+          if (vAngle < -2) {
+            drive.tankDrive(-0.3, -0.3);
+          }
+        }
+        break;
+ */
 
 
 // GSD auto Balance code 
