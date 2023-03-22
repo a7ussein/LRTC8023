@@ -81,8 +81,7 @@ public class Robot extends TimedRobot {
 
     // Camera init:
     UsbCamera camera = CameraServer.startAutomaticCapture(0);
-    camera.setResolution(400, 222
-    );
+    camera.setResolution(400, 222);
 
     
     rightFrontMotor.restoreFactoryDefaults();
