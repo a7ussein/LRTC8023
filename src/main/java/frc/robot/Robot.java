@@ -25,7 +25,6 @@ public class Robot extends TimedRobot {
 
   // Auto Selection:
   private static final String kDefaultAuto = "Nothing Auto";
-  // private static final String kDriveForwardAndBalance = "Base AutoBalance code"; Hidden from SmartDashboard 
   private static final String kDepositAndDriveForward = "Mobility";
   private static final String kDepositAndBalance = "Deposit & Balance";
   private String m_autoSelected;
@@ -45,11 +44,6 @@ public class Robot extends TimedRobot {
   // Intake Motors
   private WPI_VictorSPX rollerMotor = new WPI_VictorSPX(5);
   private WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6);
-
-  /* let's say we have a nio for our arm
-  go uncomment the code for it that is in teliop periodic*/ 
-  // private CANSparkMax armMotor = new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless);
-  // RelativeEncoder armEncoder = armMotor.getEncoder();
 
   // Encoders
   RelativeEncoder leftEncoder = leftFrontMotor.getEncoder();
@@ -74,7 +68,6 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Auto Selection:
     m_chooser.setDefaultOption("Nothing Auto", kDefaultAuto);
-    // m_chooser.addOption("DriveForwardAndBalance", kDriveForwardAndBalance); // don't need this to show on shuffle board.
     m_chooser.addOption("Mobility", kDepositAndDriveForward);
     m_chooser.addOption("Deposit & Balance", kDepositAndBalance);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -101,15 +94,12 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void robotPeriodic() {
-    // SmartDashboard.putNumber("arm encoder",armEncoder.getPosition());
-  }
+  public void robotPeriodic() {}
 
   @Override
   public void autonomousInit() {
     // Auto Stuff:
     m_autoSelected = m_chooser.getSelected();
-    // System.out.println("Auto selected: " + m_autoSelected);
 
     startTime = Timer.getFPGATimestamp();
 
@@ -258,7 +248,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    // System.out.println(Math.round(gyro.getAngle()));
     // drive controls
     double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4) * 0.55;
@@ -314,29 +303,7 @@ public class Robot extends TimedRobot {
     } else if (intakeController.getAButton() == true) {
       rollersPower = -0.7;
     }
-    // rollersPower = intakeController.getRawAxis(4);
     rollerMotor.set(ControlMode.PercentOutput, rollersPower);
-
-    //let's say we have a nio for our arm go uncomment the code for break mode
-    // if(intakeController.getBButton()){
-    //   armMotor.set(0.1);
-    // }else if(intakeController.getXButton()){
-    //   armMotor.set(-0.1);
-    // }else{
-    //   armMotor.set(0);
-    // }
-
-    // if(intakeController.getBButton()){
-    //   if(Math.abs(armEncoder.getPosition()) < 3){
-    //     armMotor.set(0.1);
-    //   }else{
-    //     armMotor.set(0);
-    //   }
-    // }else if(armEncoder.getPosition() > 0){
-    //   armMotor.set(-0.1);
-    // }else{
-    //   armMotor.set(0);
-    // }
   }
 
   @Override
@@ -387,160 +354,3 @@ public class Robot extends TimedRobot {
     rollerMotor.setNeutralMode(iMotorMode);
   }
 }
-
-
-// Base Balancing Code:
-/*
- * // kDriveForwardAndBalance is the base code don't play around with it
-      case kDriveForwardAndBalance:
-      if(time - startTime < 1){
-        rollerMotor.set(.7);
-       }else{
-        rollerMotor.set(0);
-       }
-      enableIntakeBreak(true);
-       double vAngle = gyro.getYComplementaryAngle(); // vAngle stands for virticle angle AKA YComplementartAngle
-
-        // rio is mounted backward
-        vAngle = vAngle * -1;
-
-        if (m_starting && vAngle > 5) {
-          m_onRamp = true;
-          m_ascending = true;
-          m_starting = false;
-        }
-
-        if (m_ascending && vAngle < 0) {
-          m_ascending = false;
-          m_onFlat = true;
-        }
-
-        if (m_onFlat && Math.abs(vAngle) > 5) {
-          m_onFlat = false;
-          m_descending = true;
-        }
-
-        if (m_descending && Math.abs(vAngle) < 2) {
-          m_descending = false;
-          m_onRamp = false;
-          m_exitingRamp = true;
-          m_position = Math.abs(leftPosition);
-        }
-
-        if (m_starting || m_ascending) {
-          drive.tankDrive(0.55, 0.55);
-        }
-
-        if (m_onFlat || m_descending) {
-          drive.tankDrive(0.2, 0.2);
-        }
-
-        if (m_exitingRamp){
-          if (Math.abs(leftPosition) < m_position + 4){
-            drive.tankDrive(0.3, 0.3);
-          }
-          else {
-            m_exitingRamp = false;
-            m_startBalancing = true;
-            //leftEncoder.setPosition(0);
-            m_position = leftPosition - 20;
-          }
-        }
-      
-        if (m_startBalancing) {
-          if (leftPosition > m_position) {
-          //if (Math.abs(vAngle) > 10) {
-            drive.tankDrive(-0.55, -0.55);
-          } else {
-            m_startBalancing = false;
-            m_balancing = true;
-          }
-        }
-
-        if (m_balancing) {
-          if (vAngle > 2) {
-            drive.tankDrive(0.3, 0.3);
-          }
-          if (vAngle < -2) {
-            drive.tankDrive(-0.3, -0.3);
-          }
-        }
-        break;
- */
-
-
-// GSD auto Balance code 
-/*
- * case kgsdDepositAndBalance:
-      if(time - startTime < 5){
-        rollerMotor.set(.7);
-       }else{
-        rollerMotor.set(0);
-       }
-        enableIntakeBreak(true);
-        vAngleTest = vAngleTest * -1;
-
-        if (m_starting && vAngleTest > 5) {
-          m_onRamp = true;
-          m_ascending = true;
-          m_starting = false;
-        }
-
-        if (m_ascending && vAngleTest < 0) {
-          m_ascending = false;
-          m_onFlat = true;
-        }
-
-        if (m_onFlat && Math.abs(vAngleTest) > 5) {
-          m_onFlat = false;
-          m_descending = true;
-        }
-
-        if (m_descending && Math.abs(vAngleTest) < 1.5) {
-          m_descending = false;
-          m_onRamp = false;
-          m_exitingRamp = true;
-          m_position = Math.abs(leftPosition);
-        }
-
-        if (m_starting || m_ascending) {
-          drive.tankDrive(0.55, 0.55);
-        }
-
-        if (m_onFlat || m_descending) {
-          drive.tankDrive(0.2, 0.2);
-        }
-
-        if (m_exitingRamp){
-          if (Math.abs(leftPosition) < m_position + 4){
-            drive.tankDrive(0.3, 0.3);
-          }
-          else {
-            m_exitingRamp = false;
-            m_startBalancing = true;
-            //leftEncoder.setPosition(0);
-            m_position = leftPosition - 20;
-          }
-        }
-
-        if (m_startBalancing) {
-          if (leftPosition > m_position) {
-          //if (Math.abs(vAngle) > 10) {
-            drive.tankDrive(-0.6, -0.6);
-          } else {
-            m_startBalancing = false;
-            m_balancing = true;
-          }
-        }
-
-        if (m_balancing) {
-          if (vAngleTest > 4) {
-            drive.tankDrive(0.278, 0.278);
-          }
-          if (vAngleTest < -4) {
-            drive.tankDrive(-0.278, -0.278);
-          }
-        }
-
-        break;
- */
