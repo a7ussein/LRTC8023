@@ -28,7 +28,7 @@ public class Robot extends TimedRobot {
   // private static final String kDriveForwardAndBalance = "Base AutoBalance code"; Hidden from SmartDashboard 
   private static final String kDepositAndDriveForward = "Mobility";
   private static final String kDepositAndBalance = "Deposit & Balance";
-  private String m_autoSelected;
+//   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
   // Driving Motors
@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
   RelativeEncoder rightEncoder = rightFrontMotor.getEncoder();
 
   //Sensors
-  private ADIS16470_IMU gyro = new ADIS16470_IMU();
+  //private ADIS16470_IMU gyro = new ADIS16470_IMU();
   DigitalInput frontLimitSensor = new DigitalInput(8);
   DigitalInput backLimitSensor = new DigitalInput(9);
 
@@ -68,6 +68,9 @@ public class Robot extends TimedRobot {
   private final double encoder2inches = 1/8.46;  // Unit Conversion
   private double startTime;   // Time Tracker
   SlewRateLimiter limiter = new SlewRateLimiter(1.0);   // Input Ramp
+
+  private Components components = new Components();
+  private AutonomousBase autonomous;
 
 
   @Override
@@ -81,10 +84,8 @@ public class Robot extends TimedRobot {
 
     // Camera init:
     UsbCamera camera = CameraServer.startAutomaticCapture(0);
-    camera.setResolution(400, 222
-    );
+    camera.setResolution(400, 222);
 
-    
     rightFrontMotor.restoreFactoryDefaults();
     rightBackMotor.restoreFactoryDefaults();
     leftFrontMotor.restoreFactoryDefaults();
@@ -97,8 +98,14 @@ public class Robot extends TimedRobot {
     leftEncoder.setPosition(0);
     rightEncoder.setPosition(0);
 
-    gyro.calibrate();
-    gyro.reset();
+    // gyro.calibrate();
+    // gyro.reset();
+
+    components.encoder = leftEncoder;
+    components.rollerMotor = rollerMotor;
+    components.drive = drive;
+
+    components.init();
   }
 
   @Override
@@ -109,143 +116,162 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     // Auto Stuff:
-    m_autoSelected = m_chooser.getSelected();
+    switch(m_chooser.getSelected()) {
+        case kDepositAndDriveForward:
+            autonomous = new DepositAndDriveForward(components);
+            break;
+        case kDepositAndBalance:
+            autonomous = new DepositAndBalance(components);
+            break;
+        case kDefaultAuto:
+            autonomous = new DoNothing(components);
+            default;
+            break;
+    }
+
+    autonomous.init();
+
+
+
     // System.out.println("Auto selected: " + m_autoSelected);
 
-    startTime = Timer.getFPGATimestamp();
+    // startTime = Timer.getFPGATimestamp();
 
-    leftEncoder.setPosition(0);
-    gyro.reset();
+    // leftEncoder.setPosition(0);
+    // gyro.reset();
 
     // Balancing auto booleans inits
-    m_starting = true;
-    m_onRamp = false;
-    m_descending = false;
-    m_onFlat = false;
-    m_ascending = false;
-    m_exitingRamp = false;
-    m_startBalancing = false;
-    m_balancing = false;
+    // m_starting = true;
+    // m_onRamp = false;
+    // m_descending = false;
+    // m_onFlat = false;
+    // m_ascending = false;
+    // m_exitingRamp = false;
+    // m_startBalancing = false;
+    // m_balancing = false;
   }
   
   // Balancing auto Booleans:
-  private Boolean m_starting;
-  private Boolean m_onRamp;
-  private Boolean m_descending;
-  private Boolean m_onFlat;
-  private Boolean m_ascending;
-  private Boolean m_exitingRamp;
-  private Boolean m_startBalancing;
-  private Boolean m_balancing;
-  private Double m_position;
+  // private Boolean m_starting;
+  // private Boolean m_onRamp;
+  // private Boolean m_descending;
+  // private Boolean m_onFlat;
+  // private Boolean m_ascending;
+  // private Boolean m_exitingRamp;
+  // private Boolean m_startBalancing;
+  // private Boolean m_balancing;
+  // private Double m_position;
 
   @Override
   public void autonomousPeriodic() {
+    autonomous.periodic();
+
+    
     // Don't play with these values cuz they are gonna affect the balancing auto
-    double leftPosition = leftEncoder.getPosition();
-    double rightPosition = rightEncoder.getPosition();
-    double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
-    double vAngleTest = gyro.getYComplementaryAngle(); // vAngleTes is for YComplementartAngle and I use it for autos that I am testing, I know I could just use vAngle that is in the kDriveForwardAndBalance but I just don't want to miss around with it. 
+    // double leftPosition = leftEncoder.getPosition();
+    // double rightPosition = rightEncoder.getPosition();
+    // double distance = (Math.abs(leftPosition) + Math.abs(rightPosition)) / 2;
+    // double vAngleTest = gyro.getYComplementaryAngle(); // vAngleTes is for YComplementartAngle and I use it for autos that I am testing, I know I could just use vAngle that is in the kDriveForwardAndBalance but I just don't want to miss around with it. 
 
     // timer related stuff:
-    double time = Timer.getFPGATimestamp();
-    System.out.println(time - startTime);
+    // double time = Timer.getFPGATimestamp();
+    // System.out.println(time - startTime);
     
-    switch (m_autoSelected) {
-      case kDepositAndDriveForward:
+    // switch (m_autoSelected) {
+    //   case kDepositAndDriveForward:
        // shoot the cube out then drive forward for 8.5 wheel rotations
-       if(time - startTime < 1){
-        rollerMotor.set(.7);
-       }else{
-        rollerMotor.set(0);
-       }
-        if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
-          drive.tankDrive(0.3, 0.3);
-        } else {
-          drive.tankDrive(0, 0);
-      }
-        break;
-      case kDepositAndBalance:
+      //  if(time - startTime < 1){
+      //   rollerMotor.set(.7);
+      //  }else{
+      //   rollerMotor.set(0);
+      //  }
+      //   if ((Math.abs(leftPosition)/ 8.46) < 8.5) {
+      //     drive.tankDrive(0.3, 0.3);
+      //   } else {
+      //     drive.tankDrive(0, 0);
+      // }
+    //     break;
+    //   case kDepositAndBalance:
           /*
          * This auto is going to:
          * 1. eject the cube which takes about 2 seconds,
          * 2. balance which takes about 10 seconds 
          */
-        if(time - startTime < 1){
-          rollerMotor.set(.7);
-         }else{
-          rollerMotor.set(0);
-         }
-        // BALANCE 
-        // rio is mounted backward
-        vAngleTest = vAngleTest * -1;
+      //   if(time - startTime < 1){
+      //     rollerMotor.set(.7);
+      //    }else{
+      //     rollerMotor.set(0);
+      //    }
+      //   // BALANCE 
+      //   // rio is mounted backward
+      //   vAngleTest = vAngleTest * -1;
 
-      if (m_starting && vAngleTest > 5) {
-        m_onRamp = true;
-        m_ascending = true;
-        m_starting = false;
-      }
+      // if (m_starting && vAngleTest > 5) {
+      //   m_onRamp = true;
+      //   m_ascending = true;
+      //   m_starting = false;
+      // }
 
-      if (m_ascending && vAngleTest < 0) {
-        m_ascending = false;
-        m_onFlat = true;
-      }
+      // if (m_ascending && vAngleTest < 0) {
+      //   m_ascending = false;
+      //   m_onFlat = true;
+      // }
 
-      if (m_onFlat && Math.abs(vAngleTest) > 5) {
-        m_onFlat = false;
-        m_descending = true;
-      }
+      // if (m_onFlat && Math.abs(vAngleTest) > 5) {
+      //   m_onFlat = false;
+      //   m_descending = true;
+      // }
 
-      if (m_descending && Math.abs(vAngleTest) < 2) {
-        m_descending = false;
-        m_onRamp = false;
-        m_exitingRamp = true;
-        m_position = Math.abs(leftPosition);
-      }
+      // if (m_descending && Math.abs(vAngleTest) < 2) {
+      //   m_descending = false;
+      //   m_onRamp = false;
+      //   m_exitingRamp = true;
+      //   m_position = Math.abs(leftPosition);
+      // }
 
-      if (m_starting || m_ascending) {
-        drive.tankDrive(0.55, 0.55);
-      }
+      // if (m_starting || m_ascending) {
+      //   drive.tankDrive(0.55, 0.55);
+      // }
 
-      if (m_onFlat || m_descending) {
-        drive.tankDrive(0.2, 0.2);
-      }
+      // if (m_onFlat || m_descending) {
+      //   drive.tankDrive(0.2, 0.2);
+      // }
 
-      if (m_exitingRamp){
-        if (Math.abs(leftPosition) < m_position + 3){
-          drive.tankDrive(0.3, 0.3);
-        }
-        else {
-          m_exitingRamp = false;
-          m_startBalancing = true;
-          //leftEncoder.setPosition(0);
-          m_position = leftPosition - 20;
-        }
-      }
+      // if (m_exitingRamp){
+      //   if (Math.abs(leftPosition) < m_position + 3){
+      //     drive.tankDrive(0.3, 0.3);
+      //   }
+      //   else {
+      //     m_exitingRamp = false;
+      //     m_startBalancing = true;
+      //     //leftEncoder.setPosition(0);
+      //     m_position = leftPosition - 20;
+      //   }
+      // }
     
-      if (m_startBalancing) {
-        if (leftPosition > m_position) {
-        //if (Math.abs(vAngle) > 10) {
-          drive.tankDrive(-0.6, -0.6);
-        } else {
-          m_startBalancing = false;
-          m_balancing = true;
-        }
-      }
+      // if (m_startBalancing) {
+      //   if (leftPosition > m_position) {
+      //   //if (Math.abs(vAngle) > 10) {
+      //     drive.tankDrive(-0.6, -0.6);
+      //   } else {
+      //     m_startBalancing = false;
+      //     m_balancing = true;
+      //   }
+      // }
 
-      if (m_balancing) {
-        if (vAngleTest > 2) {
-          drive.tankDrive(0.27, 0.27);
-        }
-        if (vAngleTest < -2) {
-          drive.tankDrive(-0.27, -0.27);
-        }
-      }
-        break;
-      case kDefaultAuto:
-        default:
-        break;
-    }
+      // if (m_balancing) {
+      //   if (vAngleTest > 2) {
+      //     drive.tankDrive(0.27, 0.27);
+      //   }
+      //   if (vAngleTest < -2) {
+      //     drive.tankDrive(-0.27, -0.27);
+      //   }
+      // }
+    //     break;
+    //   case kDefaultAuto:
+    //     default:
+    //     break;
+    // }
   }
 
   @Override
@@ -263,7 +289,7 @@ public class Robot extends TimedRobot {
     // drive controls
     double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
     double turn = -driveController.getRawAxis(4) * 0.55;
-    double vAngleTest = gyro.getYComplementaryAngle();
+    double vAngleTest = components.gyro.getYComplementaryAngle();
     vAngleTest = vAngleTest * -1; //rio is mounted backwards
 
     if(driveController.getRightBumper()){ // if the RightBumber is pressed then slow mode is going to be enabled
