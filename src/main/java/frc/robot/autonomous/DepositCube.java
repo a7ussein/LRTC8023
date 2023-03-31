@@ -2,9 +2,9 @@ package frc.robot.autonomous;
 
 import frc.robot.Components;
 
-public class DepositAndDriveForward extends AutonomousBase {
+public class DepositCube extends AutonomousBase {
 
-    public DepositAndDriveForward(Components components) {
+    public DepositCube(Components components) {
         super(components);
     }
 
@@ -16,12 +16,6 @@ public class DepositAndDriveForward extends AutonomousBase {
             components.rollerMotor.set(this.targetRollerSpeed);
         } else {
             components.rollerMotor.set(0);
-        }
-
-        if ((Math.abs(components.encoder.getPosition()) / 8.46) < 8.5) {
-            components.drive.tankDrive(0.3, 0.3);
-        } else {
-            components.drive.tankDrive(0, 0);
         }
     }
 }

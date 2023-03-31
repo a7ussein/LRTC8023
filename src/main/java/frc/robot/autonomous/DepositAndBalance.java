@@ -44,7 +44,7 @@ public class DepositAndBalance extends AutonomousBase {
         vAngleTest = vAngleTest * -1;
 
         if (this.currentTime - this.startTime < 1) {
-            components.rollerMotor.set(.7);
+            components.rollerMotor.set(this.targetRollerSpeed);
         } else {
             components.rollerMotor.set(0);
         }

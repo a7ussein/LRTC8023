@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.autonomous.AutonomousBase;
 import frc.robot.autonomous.DepositAndBalance;
 import frc.robot.autonomous.DepositAndDriveForward;
+import frc.robot.autonomous.DepositCube;
 import frc.robot.autonomous.DoNothing;
 
 public class Robot extends TimedRobot {
@@ -29,8 +30,10 @@ public class Robot extends TimedRobot {
     private static final String kDefaultAuto = "Nothing Auto";
     private static final String kDepositAndDriveForward = "Mobility";
     private static final String kDepositAndBalance = "Deposit & Balance";
+    private static final String kDepositCube = "Deposit Cube";
     // private String m_autoSelected;
-    private final SendableChooser<String> m_chooser = new SendableChooser<>();
+    private final SendableChooser<String> auto_chooser = new SendableChooser<>();
+
 
     // Driving Motors
     private CANSparkMax leftFrontMotor = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -55,10 +58,12 @@ public class Robot extends TimedRobot {
     // private ADIS16470_IMU gyro = new ADIS16470_IMU();
     DigitalInput frontLimitSensor = new DigitalInput(8);
     DigitalInput backLimitSensor = new DigitalInput(9);
+    DigitalInput cubeSensor = new DigitalInput(0);
+    
 
     // Controllers
-    private XboxController driveController = new XboxController(0);
-    private XboxController intakeController = new XboxController(1);
+    private XboxController driveController = new XboxController(Constants.drivingConstants.driveController);
+    private XboxController intakeController = new XboxController(Constants.drivingConstants.intakeController);
 
     // variables
     private final double encoder2inches = 1 / 8.46; // Unit Conversion
@@ -70,10 +75,11 @@ public class Robot extends TimedRobot {
     @Override
     public void robotInit() {
         // Auto Selection:
-        m_chooser.setDefaultOption("Nothing Auto", kDefaultAuto);
-        m_chooser.addOption("Mobility", kDepositAndDriveForward);
-        m_chooser.addOption("Deposit & Balance", kDepositAndBalance);
-        SmartDashboard.putData("Auto choices", m_chooser);
+        auto_chooser.setDefaultOption("Nothing Auto", kDefaultAuto);
+        auto_chooser.addOption("Deposit Cube", kDepositCube);
+        auto_chooser.addOption("Mobility", kDepositAndDriveForward);
+        auto_chooser.addOption("Deposit & Balance", kDepositAndBalance);
+        SmartDashboard.putData("Auto choices", auto_chooser);
 
         // Camera init:
         UsbCamera camera = CameraServer.startAutomaticCapture(0);
@@ -105,12 +111,15 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit() {
         // Auto Stuff:
-        switch (m_chooser.getSelected()) {
+        switch (auto_chooser.getSelected()) {
             case kDepositAndDriveForward:
                 autonomous = new DepositAndDriveForward(components);
                 break;
             case kDepositAndBalance:
                 autonomous = new DepositAndBalance(components);
+                break;
+            case kDepositCube:
+                autonomous = new DepositCube(components);
                 break;
             case kDefaultAuto:
                 autonomous = new DoNothing(components);
@@ -141,17 +150,17 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         // drive controls
         double Speed = -driveController.getRawAxis(1) * 0.9; // for this axis: up is negative, down is positive
-        double turn = -driveController.getRawAxis(4) * 0.55;
+        double turn = -driveController.getRawAxis(4) * 0.6;
         double vAngleTest = components.gyro.getYComplementaryAngle();
         vAngleTest = vAngleTest * -1; // rio is mounted backwards
 
         if (driveController.getRightBumper()) { // if the RightBumber is pressed then slow mode is going to be enabled
-            drive.arcadeDrive(Speed / 2, turn);
+            drive.arcadeDrive(Speed / 2, turn/2);
         } else if (driveController.getLeftBumper()) { // if both right and left bumbers are pressed then ultra slow mode
                                                       // is going to be enabled
             drive.arcadeDrive(0, 0);
         } else {
-            drive.arcadeDrive(limiter.calculate(Speed), turn); // if the no button is pressed the "input ramping" is
+            drive.arcadeDrive(Speed, turn); // if the no button is pressed the "input ramping" is
                                                                // going to be on
         }
 
@@ -187,14 +196,23 @@ public class Robot extends TimedRobot {
         } else {
             raisingMotor.set(0);
         }
+
         // intake Rollers control
         double rollersPower = 0;
-        // press Y if you want to pick up an object, and press A if you want to shoot
-        // the object
-        if (intakeController.getYButton() == true) {
-            rollersPower = 1;
-        } else if (intakeController.getAButton() == true) {
+
+        /*
+         * Operator can only intake using the A button if there is no Cube in the intake
+         * Operator can only outtake using the Y button if there is a cube in the intake
+         * if something happens to the sensor then the operator can just use the right bumber for intake and the left bumber for outtake 
+         */
+        if(intakeController.getAButton() && !cubeSensor.get()) {
             rollersPower = -0.7;
+        }else if(intakeController.getYButton()&& cubeSensor.get()) {
+            rollersPower = 1; 
+        }else if(intakeController.getRightBumper()){
+            rollersPower = -0.7;
+        }else if(intakeController.getLeftBumper()){
+            rollersPower = 1;
         }
         rollerMotor.set(ControlMode.PercentOutput, rollersPower);
     }
