@@ -156,12 +156,10 @@ public class Robot extends TimedRobot {
 
         if (driveController.getRightBumper()) { // if the RightBumber is pressed then slow mode is going to be enabled
             drive.arcadeDrive(Speed / 2, turn/2);
-        } else if (driveController.getLeftBumper()) { // if both right and left bumbers are pressed then ultra slow mode
-                                                      // is going to be enabled
+        } else if (driveController.getLeftBumper()) { // if both right and left bumbers are pressed then ultra slow mode is going to be enabled
             drive.arcadeDrive(0, 0);
         } else {
-            drive.arcadeDrive(Speed, turn); // if the no button is pressed the "input ramping" is
-                                                               // going to be on
+            drive.arcadeDrive(Speed, turn); // if the no button is pressed the "input ramping" is going to be on
         }
 
         // auto balance using the A Button
