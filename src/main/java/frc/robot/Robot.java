@@ -3,6 +3,7 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.platform.can.AutocacheState;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
@@ -18,11 +19,14 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import frc.robot.autonomous.AutonomousBase;
 import frc.robot.autonomous.DepositAndBalance;
 import frc.robot.autonomous.DepositAndDriveForward;
 import frc.robot.autonomous.DepositCube;
 import frc.robot.autonomous.DoNothing;
+import frc.robot.autonomous.TwoCubeAuto;
+import frc.robot.autonomous.twoCubeBalance;
 
 public class Robot extends TimedRobot {
 
@@ -31,6 +35,11 @@ public class Robot extends TimedRobot {
     private static final String kDepositAndDriveForward = "Mobility";
     private static final String kDepositAndBalance = "Deposit & Balance";
     private static final String kDepositCube = "Deposit Cube";
+    
+    private static final String kTwoCubeAuto = "Two Cube Auto";
+    private static final String ktwoCubeBalance = "Two Cube & Balance";
+    private static final String kDepositSensor = "Deposit Sensor";
+    private static final String kRaiseArm = "Raise Arm";
     // private String m_autoSelected;
     private final SendableChooser<String> auto_chooser = new SendableChooser<>();
 
@@ -56,9 +65,9 @@ public class Robot extends TimedRobot {
 
     // Sensors
     // private ADIS16470_IMU gyro = new ADIS16470_IMU();
-    DigitalInput frontLimitSensor = new DigitalInput(8);
-    DigitalInput backLimitSensor = new DigitalInput(9);
-    DigitalInput cubeSensor = new DigitalInput(0);
+    // ProximitySensor cubeSensor = new ProximitySensor(7);
+    // ProximitySensor frontLimitSensor = new ProximitySensor(9);
+    // ProximitySensor backLimitSensor = new ProximitySensor(8);
     
 
     // Controllers
@@ -79,6 +88,13 @@ public class Robot extends TimedRobot {
         auto_chooser.addOption("Deposit Cube", kDepositCube);
         auto_chooser.addOption("Mobility", kDepositAndDriveForward);
         auto_chooser.addOption("Deposit & Balance", kDepositAndBalance);
+
+        auto_chooser.addOption("Two Cube Auto", kTwoCubeAuto);
+        auto_chooser.addOption("Two Cube & Balance", ktwoCubeBalance);
+        auto_chooser.addOption("DeositSensor", kDepositSensor);
+        auto_chooser.addOption("Raise Arm", kRaiseArm);
+
+
         SmartDashboard.putData("Auto choices", auto_chooser);
 
         // Camera init:
@@ -106,6 +122,9 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotPeriodic() {
+        SmartDashboard.putBoolean("frontLimitSenosr", components.frontLimitSensor.get());
+        SmartDashboard.putBoolean("backLimitSensor", components.backLimitSensor.get());
+        SmartDashboard.putBoolean("CubeSensor", components.cubeSensor.get());
     }
 
     @Override
@@ -114,19 +133,25 @@ public class Robot extends TimedRobot {
         switch (auto_chooser.getSelected()) {
             case kDepositAndDriveForward:
                 autonomous = new DepositAndDriveForward(components);
-                break;
+            break;
             case kDepositAndBalance:
                 autonomous = new DepositAndBalance(components);
-                break;
+            break;
             case kDepositCube:
                 autonomous = new DepositCube(components);
-                break;
+            break;
+            case kTwoCubeAuto:
+                autonomous = new TwoCubeAuto(components);
+            break;
+            case ktwoCubeBalance:
+                autonomous = new twoCubeBalance(components);
+            break;
             case kDefaultAuto:
                 autonomous = new DoNothing(components);
-                break;
+            break;
             default:
                 autonomous = new DoNothing(components);
-                break;
+            break;
         }
 
         autonomous.init();
@@ -172,6 +197,8 @@ public class Robot extends TimedRobot {
             }
         }
 
+
+
         // intake RaisingMotor Control
         double raisingPower = intakeController.getRawAxis(1);
         // deadBand -- just cuz, why not?
@@ -180,16 +207,16 @@ public class Robot extends TimedRobot {
         }
 
         // going forward
-        if (raisingPower < 0 && !frontLimitSensor.get()) {
+        if (raisingPower < 0 && components.frontLimitSensor.get()) {
             raisingPower = 0;
         }
 
         // going backward
-        if (raisingPower > 0 && !backLimitSensor.get()) {
+        if (raisingPower > 0 && components.backLimitSensor.get()) {
             raisingPower = 0;
         }
 
-        if ((raisingPower < 0 && frontLimitSensor.get()) || (raisingPower > 0 && backLimitSensor.get())) {
+        if ((raisingPower < 0 && !components.frontLimitSensor.get()) || (raisingPower > 0 && !components.backLimitSensor.get())) {
             raisingMotor.set(raisingPower * 0.6);
         } else {
             raisingMotor.set(0);
@@ -203,14 +230,10 @@ public class Robot extends TimedRobot {
          * Operator can only outtake using the Y button if there is a cube in the intake
          * if something happens to the sensor then the operator can just use the right bumber for intake and the left bumber for outtake 
          */
-        if(intakeController.getAButton() && !cubeSensor.get()) {
+        if(intakeController.getAButton()) {
             rollersPower = -0.7;
-        }else if(intakeController.getYButton()&& cubeSensor.get()) {
+        }else if(intakeController.getYButton()) {
             rollersPower = 1; 
-        }else if(intakeController.getRightBumper()){
-            rollersPower = -0.7;
-        }else if(intakeController.getLeftBumper()){
-            rollersPower = 1;
         }
         rollerMotor.set(ControlMode.PercentOutput, rollersPower);
     }

@@ -10,9 +10,14 @@ import com.revrobotics.RelativeEncoder;
 
 public class Components {
     public WPI_VictorSPX rollerMotor;
+    public WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6) ;
     public RelativeEncoder encoder;
     public ADIS16470_IMU gyro = new ADIS16470_IMU();
     public DifferentialDrive drive;
+    public ProximitySensor cubeSensor = new ProximitySensor(7);
+    public ProximitySensor frontLimitSensor = new ProximitySensor(9);
+    public ProximitySensor backLimitSensor = new ProximitySensor(8);
+    
 
     public static final String kLow = "Low";
     public static final String kMid = "Mid";
