@@ -101,7 +101,7 @@ public class twoCubeBalance extends AutonomousBase {
                     targetPosition = Math.abs(components.encoder.getPosition());
                     state = State.lowerArm;
                 } else {
-                    components.drive.tankDrive(0.2, 0.2);
+                    components.drive.tankDrive(0.3, 0.3);
                 }
                 break;
 
@@ -114,56 +114,61 @@ public class twoCubeBalance extends AutonomousBase {
                     state = State.driveUntilCube;
                 }
                 break;
-            // case driveUntilCube:
-            // if((Math.abs(components.encoder.getPosition()) * encoder2inches) < 25 &&
-            // components.cubeSensor.get() == false){
-            // components.drive.tankDrive(0.6,0.6);
-            // components.rollerMotor.set(-0.7);
-            // System.out.println("State: " + state);
-            // }else{
-            // components.drive.tankDrive(0,0);
-            // components.rollerMotor.set(ControlMode.PercentOutput, 0);
-            // state = State.raiseArm;
-            // }
-            // break;
-
             case driveUntilCube:
-                // Start timer when entering the state
-                if (state != State.driveUntilCube) {
-                    this.startTime = Timer.getFPGATimestamp();
-                }
-
-                // Check if timeout has occurred
-                if ((Timer.getFPGATimestamp() - this.startTime) > 5.0) {
-                    components.drive.tankDrive(0.0, 0.0);
-                    components.rollerMotor.set(0.0);
-                    state = State.raiseArm;
-                    break;
-                }
-
-                if ((Math.abs(components.encoder.getPosition()) * encoder2inches) < 100 && components.cubeSensor.get() == false) {
-                    components.drive.tankDrive(0.6, 0.6);
-                    components.rollerMotor.set(-0.7);
-                    System.out.println("State: " + state);
+                if (components.cubeSensor.get() == false) {
+                    if(components.encoder.getPosition()  < 92){
+                        System.out.println("State: " + state);
+                        state = State.raiseArm;
+                        break;
+                    }else{
+                        components.drive.tankDrive(0.6, 0.6);
+                        components.rollerMotor.set(-1);
+                        System.out.println("State: " + state);
+                    }
                 } else {
-                    components.drive.tankDrive(0, 0);
+                    components.raisingMotor.set(0);
                     components.rollerMotor.set(0);
                     state = State.raiseArm;
                 }
                 break;
 
+            // case driveUntilCube:
+            //     // Start timer when entering the state
+            //     if (state != State.driveUntilCube) {
+            //         this.startTime = Timer.getFPGATimestamp();
+            //     }
+
+            //     // Check if timeout has occurred
+            //     if ((Timer.getFPGATimestamp() - this.startTime) > 5.0) {
+            //         components.drive.tankDrive(0.0, 0.0);
+            //         components.rollerMotor.set(0.0);
+            //         state = State.raiseArm;
+            //         break;
+            //     }
+
+            //     if ((Math.abs(components.encoder.getPosition()) * encoder2inches) < 100 && components.cubeSensor.get() == false) {
+            //         components.drive.tankDrive(0.6, 0.6);
+            //         components.rollerMotor.set(-0.7);
+            //         System.out.println("State: " + state);
+            //     } else {
+            //         components.drive.tankDrive(0, 0);
+            //         components.rollerMotor.set(0);
+            //         state = State.raiseArm;
+            //     }
+            //     break;
+
             case raiseArm:
                 if (!components.backLimitSensor.get()) {
-                    components.raisingMotor.set(ControlMode.PercentOutput, 0.6);
+                    components.raisingMotor.set(ControlMode.PercentOutput, 0.4);
                     System.out.println("State: " + state);
                 } else {
                     components.raisingMotor.set(0);
+                    components.rollerMotor.set(0);
                     state = State.comeBackToTarget;
                 }
                 break;
             case comeBackToTarget:
-                if (Math.abs(components.encoder.getPosition()) > targetPosition) {
-                    components.raisingMotor.set(ControlMode.PercentOutput, 0);
+                if (vAngleTest > 5) {
                     components.drive.tankDrive(-0.6, -0.6);
                     System.out.println("State: " + state);
                 } else {

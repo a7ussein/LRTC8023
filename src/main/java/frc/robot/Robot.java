@@ -25,6 +25,7 @@ import frc.robot.autonomous.DepositAndBalance;
 import frc.robot.autonomous.DepositAndDriveForward;
 import frc.robot.autonomous.DepositCube;
 import frc.robot.autonomous.DoNothing;
+import frc.robot.autonomous.OneAndHalf;
 import frc.robot.autonomous.TwoCubeAuto;
 import frc.robot.autonomous.twoCubeBalance;
 
@@ -36,6 +37,7 @@ public class Robot extends TimedRobot {
     private static final String kDepositAndBalance = "Deposit & Balance";
     private static final String kDepositCube = "Deposit Cube";
     
+    private static final String kOneAndHalf = "One And Half";
     private static final String kTwoCubeAuto = "Two Cube Auto";
     private static final String ktwoCubeBalance = "Two Cube & Balance";
     private static final String kDepositSensor = "Deposit Sensor";
@@ -90,6 +92,7 @@ public class Robot extends TimedRobot {
         auto_chooser.addOption("Deposit & Balance", kDepositAndBalance);
 
         auto_chooser.addOption("Two Cube Auto", kTwoCubeAuto);
+        auto_chooser.addOption("One And Half", kOneAndHalf);
         auto_chooser.addOption("Two Cube & Balance", ktwoCubeBalance);
         auto_chooser.addOption("DeositSensor", kDepositSensor);
         auto_chooser.addOption("Raise Arm", kRaiseArm);
@@ -101,10 +104,11 @@ public class Robot extends TimedRobot {
         UsbCamera camera = CameraServer.startAutomaticCapture(0);
         camera.setResolution(400, 222);
 
-        rightFrontMotor.restoreFactoryDefaults();
-        rightBackMotor.restoreFactoryDefaults();
+        // restore mototors factory defaults
         leftFrontMotor.restoreFactoryDefaults();
         leftBackMotor.restoreFactoryDefaults();
+        rightFrontMotor.restoreFactoryDefaults();
+        rightBackMotor.restoreFactoryDefaults();
 
         // Invertation Settings
         rightControllerGroup.setInverted(true);
@@ -115,6 +119,7 @@ public class Robot extends TimedRobot {
 
         components.encoder = leftEncoder;
         components.rollerMotor = rollerMotor;
+        components.raisingMotor = raisingMotor;
         components.drive = drive;
 
         components.init();
@@ -143,6 +148,9 @@ public class Robot extends TimedRobot {
             case kTwoCubeAuto:
                 autonomous = new TwoCubeAuto(components);
             break;
+            case kOneAndHalf:
+                autonomous = new OneAndHalf(components);
+            break;
             case ktwoCubeBalance:
                 autonomous = new twoCubeBalance(components);
             break;
@@ -169,6 +177,12 @@ public class Robot extends TimedRobot {
 
         leftEncoder.setPosition(0);
         rightEncoder.setPosition(0);
+
+        // imput ramping
+        rightFrontMotor.setOpenLoopRampRate(0.5);
+        rightBackMotor.setOpenLoopRampRate(0.5);
+        leftFrontMotor.setOpenLoopRampRate(0.5);
+        leftBackMotor.setOpenLoopRampRate(0.5);
     }
 
     @Override

@@ -16,7 +16,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import frc.robot.Components;
 
 
-public class TwoCubeAuto extends AutonomousBase {
+public class OneAndHalf extends AutonomousBase {
     private enum State{
         firstCubeDeposit,
         lowerArm,
@@ -30,7 +30,7 @@ public class TwoCubeAuto extends AutonomousBase {
     private State currentState;
     private final double encoder2inches = 1 / 8.46; // Unit Conversion
 
-    public TwoCubeAuto(Components components) {
+    public OneAndHalf(Components components) {
         super(components);
         currentState = State.firstCubeDeposit;
     }
@@ -84,7 +84,7 @@ public class TwoCubeAuto extends AutonomousBase {
                 System.out.println("The following state is over: " + currentState);
             }else{
                     components.raisingMotor.set(ControlMode.PercentOutput, 0);
-                    currentState = State.driveBackward;
+                    currentState = State.Finished;
                 }
             break;
 

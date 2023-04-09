@@ -9,8 +9,10 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.revrobotics.RelativeEncoder;
 
 public class Components {
+    // TODO: all motor ports should be defined here and not in Robot.java
+    // didn't want to mess up working code though.
     public WPI_VictorSPX rollerMotor;
-    public WPI_VictorSPX raisingMotor = new WPI_VictorSPX(6) ;
+    public WPI_VictorSPX raisingMotor;
     public RelativeEncoder encoder;
     public ADIS16470_IMU gyro = new ADIS16470_IMU();
     public DifferentialDrive drive;
