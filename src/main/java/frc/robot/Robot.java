@@ -117,6 +117,7 @@ public class Robot extends TimedRobot {
         leftEncoder.setPosition(0);
         rightEncoder.setPosition(0);
 
+        //components
         components.encoder = leftEncoder;
         components.rollerMotor = rollerMotor;
         components.raisingMotor = raisingMotor;

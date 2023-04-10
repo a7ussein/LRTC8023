@@ -5,9 +5,7 @@
 *      if it is backward it will make it forward
 *      then it will check if there is a cube in the intake
 *      if there is no cube in the intake, it will run the intake motor until there is a cube in the intake
-*  
-* then it will check if the arm is backward or not, if it is not backward it will put it backward
-* then it will drive back to the starting point and it will deposit the cube to the middle run
+*      then stop
 */
 package frc.robot.autonomous;
 

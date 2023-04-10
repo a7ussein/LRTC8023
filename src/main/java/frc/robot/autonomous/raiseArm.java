@@ -21,13 +21,11 @@ public class raiseArm extends AutonomousBase {
 
         frontLimitSensor = components.frontLimitSensor.get();
         backLimitSensor = components.backLimitSensor.get();
-        if(this.currentTime - this.startTime < 5){
             if(frontLimitSensor == true && backLimitSensor == false){
                 components.raisingMotor.set(-0.6);
             }else{
                 components.raisingMotor.set(0);
             }
-        }
     }
 
 }
