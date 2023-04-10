@@ -110,8 +110,7 @@ public class PIDDepositAndBalance extends AutonomousBase {
         }
 
         if (balancing) {
-            pidController.update(vAngleTest);
-            double output = pidController.getOutput();
+            double output = pidController.calculate(vAngleTest);
             components.drive.tankDrive(output, output);
         }
     }
